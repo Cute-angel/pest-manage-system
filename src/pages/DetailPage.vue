@@ -1,85 +1,125 @@
 <template>
   <main class="app-page">
     <section class="phone-shell">
-      <div class="body-scroll detail-body">
-        <img
-          class="hero-image"
-          src="https://images.unsplash.com/photo-1640818865404-8adb9c90a097?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3NzE4NDU4NjR8&ixlib=rb-4.1.0&q=80&w=1080"
-          alt="Crop"
-        />
+      <header class="top-bar detail-top">
+        <button class="back-btn" type="button" @click="goBack">
+          <ArrowLeft :size="16" />
+        </button>
+        <span class="top-title">虫害详情</span>
+        <span class="top-spacer" />
+      </header>
 
+      <div v-if="report" class="body-scroll detail-body">
         <section class="title-wrap">
-          <h1 class="pest-name">蚜虫监测报告</h1>
-          <p class="science">Aphidoidea · Hemiptera</p>
-          <span class="severity-badge badge-soft">严重度：中等</span>
+          <h1 class="pest-name">{{ report.reportTitle }}</h1>
+          <span class="severity-badge" :class="report.severityClass">严重程度：{{ report.severity }}</span>
         </section>
 
-        <section class="block">
-          <h2 class="block-title">虫口密度趋势</h2>
-          <article class="card chart-card">
-            <div class="rule" />
-            <div class="trend-row">
-              <span class="dot" />
-              <span class="line active" />
-              <span class="dot" />
-              <span class="line active" />
-              <span class="dot" />
-              <span class="line active" />
-              <span class="dot" />
-            </div>
-            <div class="rule muted" />
-          </article>
-        </section>
+        <img class="hero-image" :src="report.imageUrl" :alt="report.reportTitle" />
+
+        <article class="card meta-card">
+          <div class="meta-row">
+            <span class="meta-label">发现设备</span>
+            <span class="meta-value">{{ report.deviceName }}</span>
+          </div>
+          <div class="divider" />
+          <div class="meta-row">
+            <span class="meta-label">发现地点</span>
+            <span class="meta-value">{{ report.locationName }}</span>
+          </div>
+        </article>
 
         <section class="block">
-          <h2 class="block-title">Analysis</h2>
+          <h2 class="block-title">处置建议</h2>
           <article class="card info-card">
-            <p class="body-text">过去7日密度缓慢上行，最近两次采样达到局部峰值。</p>
+            <p class="body-text">{{ report.recommendationText }}</p>
             <div class="divider" />
-            <p class="body-text">建议优先处理高湿区域，并在24小时后复测。</p>
-          </article>
-        </section>
-
-        <section class="block">
-          <h2 class="block-title">Recommendation</h2>
-          <article class="card info-card">
-            <p class="body-text">建议今晚18:00前完成北区点状防治并记录。</p>
+            <p class="body-note">{{ report.recommendationNote }}</p>
             <div class="button-row">
               <button class="light-btn btn-soft-primary" type="button">确认执行</button>
               <button class="light-btn btn-soft" type="button">稍后处理</button>
             </div>
           </article>
         </section>
-
-        <section class="block map-block">
-          <h2 class="map-title">Map Preview</h2>
-          <div class="map-frame">地块 N-3 边界预览</div>
-        </section>
       </div>
 
-      <BottomNav active="alert" />
+      <section v-else class="detail-empty">
+        <h1 class="pest-name">未找到虫害报告</h1>
+        <p class="empty-text">当前记录不存在或已被移除，请返回时间线重新选择。</p>
+        <RouterLink to="/timeline" class="empty-link btn-soft-primary">返回时间线</RouterLink>
+      </section>
     </section>
   </main>
 </template>
 
 <script setup lang="ts">
-import BottomNav from '../components/BottomNav.vue'
+import { computed } from 'vue'
+import { ArrowLeft } from 'lucide-vue-next'
+import { useRoute, useRouter } from 'vue-router'
+
+import { pestReportMap } from '../data/pestReports'
 import '../styles/mobile-shell.css'
+
+const route = useRoute()
+const router = useRouter()
+
+const report = computed(() => {
+  const rawId = route.params.id
+  const reportId = Array.isArray(rawId) ? rawId[0] : rawId
+
+  if (!reportId) {
+    return null
+  }
+
+  return pestReportMap.get(reportId) ?? null
+})
+
+function goBack() {
+  router.push('/timeline')
+}
 </script>
 
 <style scoped>
+.detail-top {
+  height: 64px;
+  padding: 12px 20px;
+}
+
+.back-btn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--shell-line);
+  border-radius: 10px;
+  background: color-mix(in oklab, var(--shell-bg) 82%, white);
+  color: var(--shell-text-strong);
+  display: grid;
+  place-items: center;
+}
+
+.top-title {
+  color: var(--shell-text-strong);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.top-spacer {
+  width: 36px;
+  height: 36px;
+}
+
 .detail-body {
-  padding: 0 20px 4px;
+  padding: 20px 20px 12px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 16px;
 }
 
 .hero-image {
   width: 100%;
-  height: 140px;
+  height: 220px;
   object-fit: cover;
-  border-radius: 0;
+  border-radius: 12px;
+  border: 1px solid var(--shell-line);
 }
 
 .title-wrap {
@@ -91,14 +131,8 @@ import '../styles/mobile-shell.css'
 .pest-name {
   margin: 0;
   color: var(--shell-text-strong);
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 600;
-}
-
-.science {
-  margin: 0;
-  color: var(--shell-text-muted);
-  font-size: 12px;
 }
 
 .severity-badge {
@@ -118,49 +152,46 @@ import '../styles/mobile-shell.css'
   font-weight: 600;
 }
 
-.chart-card {
-  height: 92px;
-  padding: 10px;
-  gap: 6px;
+.meta-card {
+  padding: 14px;
+  gap: 12px;
 }
 
-.rule {
-  width: 100%;
-  height: 1px;
-  background: color-mix(in oklab, var(--shell-line) 66%, white);
-}
-
-.rule.muted {
-  background: var(--shell-line);
-}
-
-.trend-row {
+.meta-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
 }
 
-.dot {
-  width: 4px;
-  height: 4px;
-  border-radius: 999px;
-  background: var(--shell-primary);
+.meta-label {
+  color: var(--shell-text-muted);
+  font-size: 12px;
+  font-weight: 500;
 }
 
-.line.active {
-  width: 52px;
-  height: 1px;
-  background: var(--shell-primary);
+.meta-value {
+  color: var(--shell-text-strong);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: right;
 }
 
 .info-card {
-  padding: 10px;
-  gap: 8px;
+  padding: 14px;
+  gap: 12px;
 }
 
 .body-text {
   margin: 0;
   color: var(--shell-text-body);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.body-note {
+  margin: 0;
+  color: var(--shell-text-muted);
   font-size: 12px;
   line-height: 1.45;
 }
@@ -176,26 +207,28 @@ import '../styles/mobile-shell.css'
   font-size: 12px;
 }
 
-.map-block {
-  gap: 8px;
+.detail-empty {
+  flex: 1;
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
 }
 
-.map-title {
+.empty-text {
   margin: 0;
-  color: var(--shell-text-strong);
-  font-size: 14px;
-  font-weight: 600;
+  color: var(--shell-text-muted);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
-.map-frame {
-  height: 56px;
-  border: 1px solid var(--shell-line);
+.empty-link {
+  width: 100%;
+  height: 44px;
   border-radius: 10px;
-  background: var(--shell-bg-soft);
-  color: var(--shell-text-muted);
-  font-size: 12px;
-  font-weight: 500;
   display: grid;
   place-items: center;
+  text-decoration: none;
 }
 </style>

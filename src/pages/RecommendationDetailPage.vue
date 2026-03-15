@@ -1,6 +1,10 @@
 <template>
   <main class="app-page">
     <section class="phone-shell recommendation-shell">
+      <button class="back-btn" type="button" @click="goBack">
+        <ArrowLeft :size="16" />
+      </button>
+
       <h1 class="header">建议详情</h1>
       <p class="sub">基于最新监测数据生成的处置建议</p>
       <div class="divider" />
@@ -9,7 +13,7 @@
         <h2>Situation Overview</h2>
         <p>北区幼苗叶背虫点密度上升，局部区域已有扩散迹象。</p>
       </section>
-      <div class="divider" />
+      <div class="divider " />
 
       <section class="section">
         <h2>Data Evidence</h2>
@@ -35,13 +39,39 @@
 </template>
 
 <script setup lang="ts">
+import { ArrowLeft } from 'lucide-vue-next'
+import { useRouter } from 'vue-router'
+
 import '../styles/mobile-shell.css'
+
+const router = useRouter()
+
+function goBack() {
+  if (window.history.length > 1) {
+    router.back()
+    return
+  }
+
+  router.push('/home')
+}
 </script>
 
 <style scoped>
 .recommendation-shell {
   padding: 20px 22px;
-  gap: 16px;
+  gap: 8px;
+}
+
+.back-btn {
+  width: max-content;
+  border: 1px solid var(--shell-line);
+  border-radius: 10px;
+  background: color-mix(in oklab, var(--shell-bg) 82%, white);
+  color: var(--shell-text-strong);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
 }
 
 .header {

@@ -4,24 +4,14 @@
       <div class="field-block">
         <label class="field-label">手机号</label>
         <div class="app-input">
-          <input
-            v-model="phone"
-            type="text"
-            class="app-input-control"
-            placeholder="请输入手机号"
-          >
+          <input v-model="phone" type="text" class="app-input-control" placeholder="请输入手机号">
         </div>
       </div>
 
       <div class="field-block">
         <label class="field-label">密码</label>
         <div class="app-input row-between">
-          <input
-            v-model="password"
-            :type="passwordFieldType"
-            class="app-input-control"
-            placeholder="请输入密码"
-          >
+          <input v-model="password" :type="passwordFieldType" class="app-input-control" placeholder="请输入密码">
           <EyeOff v-if="!showPassword" :size="16" class="icon-muted toggle-icon" @click="toggleShowPassword" />
           <Eye v-else :size="16" class="icon-muted toggle-icon" @click="toggleShowPassword" />
         </div>
@@ -40,6 +30,10 @@
       <button class="btn btn-primary login-btn" type="button" @click="handleLogin">
         <LockKeyhole :size="14" color="#ffffff" />
         <span>登录</span>
+      </button>
+
+      <button class="btn-soft guest-btn" type="button" @click="handleGuestLogin">
+        游客登录，先体验图片检测
       </button>
     </article>
   </div>
@@ -67,13 +61,22 @@ const handleLogin = () => {
   }
 
   localStorage.setItem(AUTH_STORAGE_KEY, 'true')
+  localStorage.setItem('manage-system-guest', 'false')
 
   const redirectTarget =
     typeof route.query.redirect === 'string' && route.query.redirect.startsWith('/')
       ? route.query.redirect
       : '/home'
+  console.log(redirectTarget);
 
   router.push(redirectTarget)
+}
+
+const handleGuestLogin = () => {
+  localStorage.removeItem('token')
+  localStorage.setItem(AUTH_STORAGE_KEY, 'false')
+  localStorage.setItem('manage-system-guest', 'true')
+  router.push('/detect')
 }
 
 const toggleRememberMe = () => {
@@ -151,6 +154,13 @@ const toggleShowPassword = () => {
   font-size: 14px;
   font-weight: 600;
   box-shadow: none;
+}
+
+.guest-btn {
+  height: 42px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .toggle-icon {

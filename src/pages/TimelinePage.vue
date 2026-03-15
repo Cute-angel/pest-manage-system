@@ -13,31 +13,17 @@
           <span class="chip chip-warn">warning</span>
         </div>
 
-        <p class="date eyebrow-text">今天 · 2月23日</p>
-        <article class="card timeline-card">
-          <div class="row-between top-row">
-            <div class="row-left name-row">
-              <Bug :size="16" class="icon" />
-              <p class="name">蚜虫复查</p>
-            </div>
-            <span class="badge-soft">中等</span>
-          </div>
-          <p class="summary">东侧幼苗区虫点增加，建议当日完成二次巡检。</p>
-          <span class="status-tag status-neutral">monitoring</span>
-        </article>
-
-        <p class="date eyebrow-text">昨天 · 2月22日</p>
-        <article class="card timeline-card">
-          <div class="row-between top-row">
-            <div class="row-left name-row">
-              <Leaf :size="16" class="icon" />
-              <p class="name">蓟马处置</p>
-            </div>
-            <span class="status-tag status-warm">warning</span>
-          </div>
-          <p class="summary">西区完成局部喷施，计划明早复检并更新风险等级。</p>
-        </article>
+        <section v-for="group in groupedReports" :key="group.dayLabel" class="timeline-group">
+          <p class="date eyebrow-text">{{ group.dayLabel }}</p>
+          <TimelineItemCard
+            v-for="item in group.items"
+            :key="item.id"
+            :item="item"
+            :to="`/timeline/${item.id}`"
+          />
+        </section>
       </div>
+
 
       <BottomNav active="timeline" />
     </section>
@@ -45,9 +31,27 @@
 </template>
 
 <script setup lang="ts">
-import { Bug, Leaf } from 'lucide-vue-next'
+import { computed } from 'vue'
 import BottomNav from '../components/BottomNav.vue'
+import TimelineItemCard from '../components/TimelineItemCard.vue'
+import { pestReports } from '../data/pestReports'
 import '../styles/mobile-shell.css'
+
+const groupedReports = computed(() => {
+  const groups = pestReports.reduce<Array<{ dayLabel: string; items: typeof pestReports }>>((acc, item) => {
+    const existingGroup = acc.find((group) => group.dayLabel === item.dayLabel)
+
+    if (existingGroup) {
+      existingGroup.items.push(item)
+      return acc
+    }
+
+    acc.push({ dayLabel: item.dayLabel, items: [item] })
+    return acc
+  }, [])
+
+  return groups
+})
 </script>
 
 <style scoped>
@@ -71,6 +75,12 @@ import '../styles/mobile-shell.css'
 
 .timeline-body {
   padding: 16px 20px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.timeline-group {
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -100,35 +110,5 @@ import '../styles/mobile-shell.css'
 
 .chip-warn {
   color: var(--shell-warning);
-}
-
-.timeline-card {
-  padding: 12px;
-  gap: 8px;
-}
-
-.top-row {
-  gap: 10px;
-}
-
-.name-row {
-  gap: 8px;
-}
-
-.icon {
-  color: var(--shell-icon);
-}
-
-.name {
-  margin: 0;
-  color: var(--shell-text-strong);
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.summary {
-  margin: 0;
-  color: var(--shell-text-body);
-  font-size: 12px;
 }
 </style>

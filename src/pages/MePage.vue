@@ -8,7 +8,9 @@
 
       <div class="body-scroll me-body">
         <article class="card profile-card">
-          <div class="avatar"><User :size="18" /></div>
+          <div class="avatar">
+            <User :size="18" />
+          </div>
           <div class="profile-text">
             <p class="name">李晨 · 农场管理员</p>
             <p class="meta">北区农场 · 设备在线 12 台</p>
@@ -30,24 +32,34 @@
         <section class="menu-section">
           <h2>偏好设置</h2>
           <article class="card menu-card">
-            <button class="menu-row" type="button"><span>消息提醒</span><ChevronRight :size="14" /></button>
+            <button class="menu-row" type="button"><span>消息提醒</span>
+              <ChevronRight :size="14" />
+            </button>
             <div class="divider" />
-            <button class="menu-row" type="button"><span>显示与字体</span><ChevronRight :size="14" /></button>
+            <button class="menu-row" type="button"><span>显示与字体</span>
+              <ChevronRight :size="14" />
+            </button>
             <div class="divider" />
-            <button class="menu-row" type="button"><span>数据同步</span><ChevronRight :size="14" /></button>
+            <button class="menu-row" type="button"><span>数据同步</span>
+              <ChevronRight :size="14" />
+            </button>
           </article>
         </section>
 
         <section class="menu-section">
           <h2>支持</h2>
           <article class="card menu-card">
-            <button class="menu-row" type="button"><span>帮助中心</span><ChevronRight :size="14" /></button>
+            <button class="menu-row" type="button"><span>帮助中心</span>
+              <ChevronRight :size="14" />
+            </button>
             <div class="divider" />
-            <button class="menu-row" type="button"><span>关于应用</span><ChevronRight :size="14" /></button>
+            <button class="menu-row" type="button"><span>关于应用</span>
+              <ChevronRight :size="14" />
+            </button>
           </article>
         </section>
 
-        <button class="logout-btn btn-soft" type="button">退出登录</button>
+        <button class="logout-btn btn-soft interactive-card " type="button" @click="handleLogout">退出登录</button>
         <div class="spacer" />
       </div>
 
@@ -59,7 +71,17 @@
 <script setup lang="ts">
 import { Bell, ChevronRight, User } from 'lucide-vue-next'
 import BottomNav from '../components/BottomNav.vue'
+import { logout } from '../api/person_info'
+import { useRouter } from 'vue-router'
+const router = useRouter()
+
 import '../styles/mobile-shell.css'
+
+const handleLogout = async () => {
+  await logout();
+  router.push('/login');
+}
+
 </script>
 
 <style scoped>
@@ -193,5 +215,16 @@ import '../styles/mobile-shell.css'
 
 .spacer {
   flex: 1;
+}
+
+
+.interactive-card {
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.interactive-card:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in oklab, var(--shell-primary-soft) 44%, var(--shell-primary));
+  box-shadow: 0 10px 20px color-mix(in oklab, var(--shell-primary) 8%, transparent);
 }
 </style>

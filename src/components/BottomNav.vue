@@ -8,9 +8,9 @@
       <Clock3 :size="17" />
       <span>时间线</span>
     </RouterLink>
-    <RouterLink to="/detail" class="tab" :class="{ active: active === 'alert' }">
-      <TriangleAlert :size="17" />
-      <span>预警</span>
+    <RouterLink to="/detect" class="tab" :class="{ active: active === 'detect' }">
+      <Search :size="17" />
+      <span>检测</span>
     </RouterLink>
     <RouterLink to="/me" class="tab" :class="{ active: active === 'me' }">
       <User :size="17" />
@@ -20,11 +20,11 @@
 </template>
 
 <script setup lang="ts">
-import { Clock3, House, TriangleAlert, User } from 'lucide-vue-next'
+import { Clock3, House, Search, User } from 'lucide-vue-next'
 
 withDefaults(
   defineProps<{
-    active?: 'home' | 'timeline' | 'alert' | 'me'
+    active?: 'home' | 'timeline' | 'detect' | 'me'
   }>(),
   {
     active: 'home',

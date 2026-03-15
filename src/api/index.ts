@@ -1,3 +1,5 @@
-import login from "./person_info";
+const server_address = "http://localhost:8000";
 
-export { login };
+const getToken = () => localStorage.getItem("token");
+
+export { server_address, getToken };

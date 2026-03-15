@@ -47,3 +47,42 @@
   --depth: 0;
   --noise: 0;
 }
+
+:root {
+  --app-scrollbar-size: 1px;
+  --app-scrollbar-radius: 999px;
+  --app-scrollbar-thumb: color-mix(
+    in oklab,
+    var(--color-base-content) 18%,
+    transparent
+  );
+  --app-scrollbar-thumb-hover: color-mix(
+    in oklab,
+    var(--color-base-content) 28%,
+    transparent
+  );
+  --app-scrollbar-track: transparent;
+}
+
+* {
+  scrollbar-width: none;
+  scrollbar-color: var(--app-scrollbar-thumb) var(--app-scrollbar-track);
+}
+
+*::-webkit-scrollbar {
+  width: var(--app-scrollbar-size);
+  height: var(--app-scrollbar-size);
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--app-scrollbar-track);
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--app-scrollbar-thumb);
+  border-radius: var(--app-scrollbar-radius);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--app-scrollbar-thumb-hover);
+}

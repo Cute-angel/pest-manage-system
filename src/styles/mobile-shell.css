@@ -40,8 +40,10 @@ input {
 }
 
 .phone-shell {
+  
   width: 390px;
   height: 844px;
+  
   border-radius: 20px;
   background: var(--shell-bg);
   display: flex;

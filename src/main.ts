@@ -3,11 +3,13 @@ import { createRouter, createWebHistory } from "vue-router";
 import App from "./App.vue";
 import "./styles/tailwind.css";
 import HomePage from "./pages/HomePage.vue";
+import DetectPage from "./pages/DetectPage.vue";
 import LoginPage from "./pages/LoginPage.vue";
 import DetailPage from "./pages/DetailPage.vue";
 import RecommendationDetailPage from "./pages/RecommendationDetailPage.vue";
 import MePage from "./pages/MePage.vue";
 import TimelinePage from "./pages/TimelinePage.vue";
+import { createPinia } from "pinia";
 
 const AUTH_STORAGE_KEY = "manage-system-authenticated";
 
@@ -16,13 +18,18 @@ const router = createRouter({
   routes: [
     { path: "/", redirect: "/home" },
     { path: "/home", component: HomePage, meta: { requiresAuth: true } },
+    { path: "/detect", component: DetectPage },
     { path: "/login", component: LoginPage },
-    { path: "/detail", component: DetailPage, meta: { requiresAuth: true } },
     { path: "/recommendation-detail", component: RecommendationDetailPage },
     { path: "/me", component: MePage, meta: { requiresAuth: true } },
     {
       path: "/timeline",
       component: TimelinePage,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/timeline/:id",
+      component: DetailPage,
       meta: { requiresAuth: true },
     },
   ],
@@ -47,4 +54,4 @@ router.beforeEach((to) => {
   return true;
 });
 
-createApp(App).use(router).mount("#app");
+createApp(App).use(router).use(createPinia()).mount("#app");

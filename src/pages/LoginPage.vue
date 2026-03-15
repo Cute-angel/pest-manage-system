@@ -17,17 +17,17 @@
             <h1 class="title">欢迎回来</h1>
             <p class="subtitle">登录后查看地块巡查与虫情趋势</p>
           </div>
-          <LoginTable />
-
+          <LoginTable v-if="loginFlag"/>
+          <register-table v-else :loginFlag="loginFlag" v-model="loginFlag"/>
           <div class="alt-login-row">
             <div class="line" />
-            <span class="alt-text">短信验证码登录</span>
+            <span class="alt-text">支持游客先体验图片检测</span>
             <div class="line" />
           </div>
         </section>
 
         <section class="login-bottom">
-          <p class="register-text">没有账号？立即注册</p>
+          <p class="register-text" v-if="loginFlag" @click="switchLoginRegister">没有账号？立即注册</p>
           <p class="policy-text">登录即同意《用户协议》与《隐私政策》</p>
         </section>
       </div>
@@ -39,6 +39,14 @@
 import { Leaf } from 'lucide-vue-next'
 import LoginTable from '../components/LoginTable.vue'
 import '../styles/mobile-shell.css'
+import {ref} from "vue";
+import RegisterTable from "../components/RegisteTable.vue";
+
+const loginFlag =ref<boolean>(true)
+
+const switchLoginRegister = () =>{
+  loginFlag.value = !loginFlag.value
+}
 </script>
 
 <style scoped>
