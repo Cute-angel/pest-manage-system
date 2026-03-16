@@ -18,7 +18,6 @@
               <p class="section-title">图片上传</p>
               <p class="eyebrow-text">支持 JPG / PNG，识别后预览区直接切换为框选结果</p>
             </div>
-            <!-- <button class="select-btn btn-soft-primary" type="button" @click="openPicker">选取图片</button> -->
           </div>
 
           <input
@@ -47,6 +46,11 @@
         <section v-if="isAnalyzing" class="card analysis-card">
           <p class="section-title">图片分析</p>
           <p class="body-text">正在分析图片中的虫害特征，请稍候...</p>
+        </section>
+
+        <section v-else-if="analysisError" class="card analysis-card">
+          <p class="section-title">图片分析</p>
+          <p class="body-text error-text">{{ analysisError }}</p>
         </section>
 
         <section v-else-if="analysis" class="card analysis-card">
@@ -98,12 +102,15 @@
           <p class="section-title">上传识别记录</p>
           <p class="body-text">检测到疑似虫害，是否将本次识别结果上传到巡检记录？</p>
           <div v-if="recordStatus === 'idle'" class="record-actions">
-            <button class="btn-soft-primary record-btn" type="button" @click="markUploaded">上传记录</button>
+            <button class="btn-soft-primary record-btn" type="button" @click="markUploaded">
+              {{ isSubmittingRecord ? '上传中...' : '上传记录' }}
+            </button>
             <button class="btn-soft record-btn" type="button" @click="skipUpload">暂不上传</button>
           </div>
           <p v-else class="record-note">
-            {{ recordStatus === 'uploaded' ? '本次识别结果已标记为待上传记录。' : '你已选择暂不上传本次记录。' }}
+            {{ recordStatus === 'uploaded' ? '本次识别结果已上传到巡检记录。' : '你已选择暂不上传本次记录。' }}
           </p>
+          <p v-if="recordMessage" class="record-note error-text">{{ recordMessage }}</p>
         </section>
 
         <section v-else-if="hasDetectedPests" class="card record-card">
@@ -122,19 +129,19 @@
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { Search } from 'lucide-vue-next'
 
-import { analyzePestImage } from '../api/detection'
-import type { DetectionResult } from '../api/types'
+import { detectionsApi, isAuthenticatedSession, toApiError, type DetectionResult } from '../api'
 import BottomNav from '../components/BottomNav.vue'
 import '../styles/mobile-shell.css'
-
-const AUTH_STORAGE_KEY = 'manage-system-authenticated'
 
 const fileInput = ref<HTMLInputElement | null>(null)
 const previewUrl = ref('')
 const selectedFileName = ref('尚未选择图片')
 const analysis = ref<DetectionResult | null>(null)
 const isAnalyzing = ref(false)
-const isAuthenticated = ref(localStorage.getItem(AUTH_STORAGE_KEY) === 'true')
+const isAuthenticated = ref(isAuthenticatedSession())
+const analysisError = ref('')
+const recordMessage = ref('')
+const isSubmittingRecord = ref(false)
 const recordStatus = ref<'idle' | 'uploaded' | 'skipped'>('idle')
 
 const totalDetectedCount = computed(() => {
@@ -146,7 +153,6 @@ const totalDetectedCount = computed(() => {
 })
 
 const hasDetectedPests = computed(() => totalDetectedCount.value > 0)
-
 const annotatedImageUrl = computed(() => analysis.value?.annotatedImageUrl || previewUrl.value)
 const displayPreviewUrl = computed(() => annotatedImageUrl.value || previewUrl.value)
 
@@ -169,23 +175,47 @@ async function handleFileChange(event: Event) {
   previewUrl.value = URL.createObjectURL(file)
   selectedFileName.value = file.name
   analysis.value = null
+  analysisError.value = ''
+  recordMessage.value = ''
   recordStatus.value = 'idle'
   isAnalyzing.value = true
 
   try {
-    analysis.value = await analyzePestImage(file)
-    isAuthenticated.value = localStorage.getItem(AUTH_STORAGE_KEY) === 'true'
+    analysis.value = await detectionsApi.create(file)
+    isAuthenticated.value = isAuthenticatedSession()
+  } catch (error) {
+    analysisError.value = toApiError(error).message
   } finally {
     isAnalyzing.value = false
   }
 }
 
-function markUploaded() {
-  recordStatus.value = 'uploaded'
+async function markUploaded() {
+  if (!analysis.value) {
+    return
+  }
+
+  isSubmittingRecord.value = true
+  recordMessage.value = ''
+
+  try {
+    await detectionsApi.createRecord({
+      detectionId: analysis.value.id,
+      sourceImageName: selectedFileName.value,
+      result: analysis.value,
+    })
+
+    recordStatus.value = 'uploaded'
+  } catch (error) {
+    recordMessage.value = toApiError(error).message
+  } finally {
+    isSubmittingRecord.value = false
+  }
 }
 
 function skipUpload() {
   recordStatus.value = 'skipped'
+  recordMessage.value = ''
 }
 
 onBeforeUnmount(() => {
@@ -254,11 +284,6 @@ onBeforeUnmount(() => {
   gap: 12px;
 }
 
-.select-btn {
-  border-radius: 10px;
-  padding: 10px 14px;
-}
-
 .hidden-input {
   display: none;
 }
@@ -324,6 +349,10 @@ onBeforeUnmount(() => {
   color: var(--shell-text-body);
   font-size: 13px;
   line-height: 1.5;
+}
+
+.error-text {
+  color: var(--shell-warning);
 }
 
 .count-total {

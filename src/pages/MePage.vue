@@ -12,22 +12,24 @@
             <User :size="18" />
           </div>
           <div class="profile-text">
-            <p class="name">李晨 · 农场管理员</p>
-            <p class="meta">北区农场 · 设备在线 12 台</p>
+            <p class="name">{{ displayName }}</p>
+            <p class="meta">{{ displayMeta }}</p>
           </div>
           <ChevronRight :size="14" class="arrow" />
         </article>
 
-        <section class="stat-row">
-          <article class="card stat-card">
-            <p class="value">28</p>
-            <p class="label">本月巡检</p>
-          </article>
-          <article class="card stat-card">
-            <p class="value green">96%</p>
-            <p class="label">任务完成率</p>
-          </article>
-        </section>
+        <p v-if="errorMessage" class="page-error">{{ errorMessage }}</p>
+<!--        //-->
+<!--        <section class="stat-row">-->
+<!--          <article class="card stat-card">-->
+<!--            <p class="value">{{ monthlyInspections }}</p>-->
+<!--            <p class="label">本月巡检</p>-->
+<!--          </article>-->
+<!--          <article class="card stat-card">-->
+<!--            <p class="value green">{{ completionRate }}%</p>-->
+<!--            <p class="label">任务完成率</p>-->
+<!--          </article>-->
+<!--        </section>-->
 
         <section class="menu-section">
           <h2>偏好设置</h2>
@@ -59,7 +61,9 @@
           </article>
         </section>
 
-        <button class="logout-btn btn-soft interactive-card " type="button" @click="handleLogout">退出登录</button>
+        <button class="logout-btn btn-soft interactive-card" type="button" @click="handleLogout">
+          {{ isLoggingOut ? '退出中...' : '退出登录' }}
+        </button>
         <div class="spacer" />
       </div>
 
@@ -69,19 +73,80 @@
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted, ref } from 'vue'
 import { Bell, ChevronRight, User } from 'lucide-vue-next'
-import BottomNav from '../components/BottomNav.vue'
-import { logout } from '../api/person_info'
 import { useRouter } from 'vue-router'
-const router = useRouter()
 
+import { authApi, dashboardApi, toApiError, userApi, type DashboardSummary, type UserProfile } from '../api'
+import BottomNav from '../components/BottomNav.vue'
 import '../styles/mobile-shell.css'
 
-const handleLogout = async () => {
-  await logout();
-  router.push('/login');
+const router = useRouter()
+
+const profile = ref<UserProfile | null>(null)
+const summary = ref<DashboardSummary | null>(null)
+const errorMessage = ref('')
+const isLoggingOut = ref(false)
+
+const displayName = computed(() => {
+  if (!profile.value) {
+    return '用户信息待同步'
+  }
+
+  return `${profile.value.name} · ${profile.value.role}`
+})
+
+const onlineDeviceCount = computed(() => {
+  if (!summary.value) {
+    return '--'
+  }
+
+  return String(summary.value.deviceStatuses.find((item) => item.status === 'online')?.count ?? 0)
+})
+
+const displayMeta = computed(() => {
+  if (!profile.value) {
+    return '农场信息待同步'
+  }
+
+  return `${profile.value.farmName} · 设备在线 ${onlineDeviceCount.value} 台`
+})
+
+// const monthlyInspections = computed(() => profile.value?.monthlyInspections ?? '--')
+// const completionRate = computed(() => profile.value?.taskCompletionRate ?? '--')
+
+const loadPageData = async () => {
+  errorMessage.value = ''
+
+  const [profileResult, summaryResult] = await Promise.allSettled([userApi.getMe(), dashboardApi.getSummary()])
+
+  if (profileResult.status === 'fulfilled') {
+    profile.value = profileResult.value
+  } else {
+    errorMessage.value = toApiError(profileResult.reason).message
+  }
+
+  if (summaryResult.status === 'fulfilled') {
+    summary.value = summaryResult.value
+  } else if (!errorMessage.value) {
+    errorMessage.value = toApiError(summaryResult.reason).message
+  }
 }
 
+const handleLogout = async () => {
+  isLoggingOut.value = true
+
+  try {
+    await authApi.logout()
+    await router.push('/login')
+  } finally {
+    isLoggingOut.value = false
+  }
+}
+
+onMounted(() => {
+  void loadPageData()
+})
 </script>
 
 <style scoped>
@@ -145,6 +210,12 @@ const handleLogout = async () => {
   margin: 0;
   color: var(--shell-text-muted);
   font-size: 11px;
+}
+
+.page-error {
+  margin: -4px 0 0;
+  color: var(--shell-warning);
+  font-size: 12px;
 }
 
 .stat-row {
@@ -216,7 +287,6 @@ const handleLogout = async () => {
 .spacer {
   flex: 1;
 }
-
 
 .interactive-card {
   transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;

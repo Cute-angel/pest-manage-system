@@ -5,32 +5,49 @@
         <ArrowLeft :size="16" />
       </button>
 
-      <h1 class="header">建议详情</h1>
-      <p class="sub">基于最新监测数据生成的处置建议</p>
-      <div class="divider" />
+      <template v-if="isLoading">
+        <h1 class="header">正在加载建议</h1>
+        <p class="sub">正在同步最新监测建议，请稍候。</p>
+      </template>
 
-      <section class="section">
-        <h2>Situation Overview</h2>
-        <p>北区幼苗叶背虫点密度上升，局部区域已有扩散迹象。</p>
-      </section>
-      <div class="divider " />
+      <template v-else-if="errorMessage">
+        <h1 class="header">建议加载失败</h1>
+        <p class="sub">{{ errorMessage }}</p>
+      </template>
 
-      <section class="section">
-        <h2>Data Evidence</h2>
-        <p>48小时捕获量 +18%，湿度 82%，温度 24°C，趋势连续上行。</p>
-      </section>
-      <div class="divider" />
+      <template v-else-if="recommendation">
+        <h1 class="header">{{ recommendation.title }}</h1>
+        <p class="sub">{{ recommendation.summary }}</p>
+        <div class="divider" />
 
-      <section class="section">
-        <h2>Recommended Action</h2>
-        <p>优先对第 8-12 行进行点状防治，并标记高风险边缘带。</p>
-      </section>
-      <div class="divider" />
+        <section class="section">
+          <h2>Situation Overview</h2>
+          <p>{{ recommendation.situation }}</p>
+        </section>
+        <div class="divider " />
 
-      <section class="section">
-        <h2>Suggested Timeline</h2>
-        <p>今天 18:00 前完成处理，明天 08:00 完成首次复检。</p>
-      </section>
+        <section class="section">
+          <h2>Data Evidence</h2>
+          <p>{{ recommendation.evidence }}</p>
+        </section>
+        <div class="divider" />
+
+        <section class="section">
+          <h2>Recommended Action</h2>
+          <p>{{ recommendation.action }}</p>
+        </section>
+        <div class="divider" />
+
+        <section class="section">
+          <h2>Suggested Timeline</h2>
+          <p>{{ recommendation.timeline }}</p>
+        </section>
+      </template>
+
+      <template v-else>
+        <h1 class="header">暂无建议详情</h1>
+        <p class="sub">后端尚未返回可展示的建议内容。</p>
+      </template>
 
       <div class="spacer" />
       <button class="confirm-btn btn-soft-primary" type="button">Confirm / Schedule Action</button>
@@ -39,12 +56,46 @@
 </template>
 
 <script setup lang="ts">
+import { ref, watch } from 'vue'
 import { ArrowLeft } from 'lucide-vue-next'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
+import { recommendationsApi, toApiError, type RecommendationDetail } from '../api'
 import '../styles/mobile-shell.css'
 
+const route = useRoute()
 const router = useRouter()
+
+const recommendation = ref<RecommendationDetail | null>(null)
+const isLoading = ref(false)
+const errorMessage = ref('')
+
+const loadRecommendation = async (id?: string) => {
+  isLoading.value = true
+  errorMessage.value = ''
+
+  try {
+    recommendation.value = id
+      ? await recommendationsApi.getById(id)
+      : await recommendationsApi.getLatest()
+  } catch (error) {
+    recommendation.value = null
+    errorMessage.value = toApiError(error).message
+  } finally {
+    isLoading.value = false
+  }
+}
+
+watch(
+  () => {
+    const rawId = route.query.id
+    return Array.isArray(rawId) ? rawId[0] : rawId
+  },
+  (id) => {
+    void loadRecommendation(id ?? undefined)
+  },
+  { immediate: true },
+)
 
 function goBack() {
   if (window.history.length > 1) {

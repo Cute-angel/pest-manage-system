@@ -9,13 +9,24 @@
         <span class="top-spacer" />
       </header>
 
-      <div v-if="report" class="body-scroll detail-body">
+      <section v-if="isLoading" class="detail-empty">
+        <h1 class="pest-name">正在加载</h1>
+        <p class="empty-text">正在同步该条巡检记录，请稍候。</p>
+      </section>
+
+      <section v-else-if="errorMessage" class="detail-empty">
+        <h1 class="pest-name">加载失败</h1>
+        <p class="empty-text">{{ errorMessage }}</p>
+        <RouterLink to="/timeline" class="empty-link btn-soft-primary">返回时间线</RouterLink>
+      </section>
+
+      <div v-else-if="report" class="body-scroll detail-body">
         <section class="title-wrap">
-          <h1 class="pest-name">{{ report.reportTitle }}</h1>
-          <span class="severity-badge" :class="report.severityClass">严重程度：{{ report.severity }}</span>
+          <h1 class="pest-name">{{ report.title }}</h1>
+          <span class="severity-badge" :class="severityBadgeClass">严重程度：{{ severityLabel }}</span>
         </section>
 
-        <img class="hero-image" :src="report.imageUrl" :alt="report.reportTitle" />
+        <img class="hero-image" :src="report.imageUrl" :alt="report.title" />
 
         <article class="card meta-card">
           <div class="meta-row">
@@ -53,26 +64,66 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { ArrowLeft } from 'lucide-vue-next'
 import { useRoute, useRouter } from 'vue-router'
 
-import { pestReportMap } from '../data/pestReports'
+import { reportsApi, toApiError, type ReportDetail } from '../api'
 import '../styles/mobile-shell.css'
 
 const route = useRoute()
 const router = useRouter()
 
-const report = computed(() => {
-  const rawId = route.params.id
-  const reportId = Array.isArray(rawId) ? rawId[0] : rawId
+const report = ref<ReportDetail | null>(null)
+const isLoading = ref(false)
+const errorMessage = ref('')
 
-  if (!reportId) {
-    return null
+const reportId = computed(() => {
+  const rawId = route.params.id
+  return Array.isArray(rawId) ? rawId[0] : rawId
+})
+
+const severityLabel = computed(() => {
+  if (!report.value) {
+    return ''
   }
 
-  return pestReportMap.get(reportId) ?? null
+  switch (report.value.severity) {
+    case 'high':
+      return '偏高'
+    case 'medium':
+      return '中等'
+    default:
+      return '轻度'
+  }
 })
+
+const severityBadgeClass = computed(() => {
+  return report.value?.severity === 'high' ? 'badge-warm' : 'badge-soft'
+})
+
+const loadReport = async (id?: string) => {
+  if (!id) {
+    report.value = null
+    return
+  }
+
+  isLoading.value = true
+  errorMessage.value = ''
+
+  try {
+    report.value = await reportsApi.getById(id)
+  } catch (error) {
+    report.value = null
+    errorMessage.value = toApiError(error).message
+  } finally {
+    isLoading.value = false
+  }
+}
+
+watch(reportId, (id) => {
+  void loadReport(id)
+}, { immediate: true })
 
 function goBack() {
   router.push('/timeline')

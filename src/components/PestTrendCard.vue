@@ -7,7 +7,7 @@
       </div>
       <div class="trend-pill">
         <TrendingUp :size="14" />
-        <span>{{ trendText }}</span>
+        <span>{{ trendLabel }}</span>
       </div>
     </div>
 
@@ -64,11 +64,11 @@ const props = withDefaults(defineProps<{
   data: PestDatum[]
   title?: string
   unit?: string
-  trendText?: string
+  trendValue?: number
 }>(), {
   title: '近七天虫害',
   unit: '处',
-  trendText: '较上周 +18%',
+  trendValue: 18,
 })
 
 const chartWidth = 300
@@ -86,6 +86,14 @@ const total = computed(() => {
     value += props.data[i].value
   }
   return value
+})
+
+const trendLabel = computed(() => {
+  if (props.trendValue > 0) {
+    return `较上周 +${props.trendValue}%`
+  }
+
+  return `较上周 ${props.trendValue}%`
 })
 
 const chartPoints = computed<ChartPoint[]>(() => {

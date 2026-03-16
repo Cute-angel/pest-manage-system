@@ -3,15 +3,26 @@
     <section class="phone-shell">
       <header class="top-bar timeline-top">
         <h1 class="title">时间线</h1>
-        <span class="weather">24°C · 北区</span>
+        <span class="weather">{{ timelineMetaText }}</span>
       </header>
 
       <div class="body-scroll timeline-body">
         <div class="filter-row">
-          <span class="chip chip-active">全部</span>
-          <span class="chip">monitoring</span>
-          <span class="chip chip-warn">warning</span>
+          <button
+            v-for="filter in filters"
+            :key="filter.value"
+            class="chip"
+            :class="chipClass(filter.value)"
+            type="button"
+            @click="activeFilter = filter.value"
+          >
+            {{ filter.label }}
+          </button>
         </div>
+
+        <p v-if="isLoading" class="state-text">正在加载时间线...</p>
+        <p v-else-if="errorMessage" class="state-text state-error">{{ errorMessage }}</p>
+        <p v-else-if="groupedReports.length === 0" class="state-text">当前没有可展示的巡检记录。</p>
 
         <section v-for="group in groupedReports" :key="group.dayLabel" class="timeline-group">
           <p class="date eyebrow-text">{{ group.dayLabel }}</p>
@@ -24,34 +35,160 @@
         </section>
       </div>
 
-
       <BottomNav active="timeline" />
     </section>
   </main>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { Bug, Leaf, ShieldCheck } from 'lucide-vue-next'
+import type { Component } from 'vue'
+
+import { reportsApi, toApiError, type ReportSeverity, type ReportStatus, type ReportSummary } from '../api'
 import BottomNav from '../components/BottomNav.vue'
 import TimelineItemCard from '../components/TimelineItemCard.vue'
-import { pestReports } from '../data/pestReports'
 import '../styles/mobile-shell.css'
 
-const groupedReports = computed(() => {
-  const groups = pestReports.reduce<Array<{ dayLabel: string; items: typeof pestReports }>>((acc, item) => {
-    const existingGroup = acc.find((group) => group.dayLabel === item.dayLabel)
+type TimelineCardItem = {
+  id: string
+  icon: Component
+  name: string
+  severity: string
+  summary: string
+  status: string
+  severityClass: 'badge-soft' | 'badge-warm'
+  statusClass: 'status-neutral' | 'status-warm'
+}
 
-    if (existingGroup) {
-      existingGroup.items.push(item)
-      return acc
-    }
+type FilterValue = 'all' | ReportStatus
 
-    acc.push({ dayLabel: item.dayLabel, items: [item] })
-    return acc
-  }, [])
+const filters: Array<{ label: string; value: FilterValue }> = [
+  { label: '全部', value: 'all' },
+  { label: 'monitoring', value: 'monitoring' },
+  { label: 'warning', value: 'warning' },
+  { label: 'treated', value: 'treated' },
+]
 
-  return groups
+const reports = ref<ReportSummary[]>([])
+const isLoading = ref(false)
+const errorMessage = ref('')
+const activeFilter = ref<FilterValue>('all')
+
+const iconMap: Record<ReportStatus, Component> = {
+  monitoring: Bug,
+  warning: Leaf,
+  treated: ShieldCheck,
+}
+
+const severityLabelMap: Record<ReportSeverity, string> = {
+  light: '轻度',
+  medium: '中等',
+  high: '偏高',
+}
+
+const severityClassMap: Record<ReportSeverity, 'badge-soft' | 'badge-warm'> = {
+  light: 'badge-soft',
+  medium: 'badge-soft',
+  high: 'badge-warm',
+}
+
+const statusClassMap: Record<ReportStatus, 'status-neutral' | 'status-warm'> = {
+  monitoring: 'status-neutral',
+  warning: 'status-warm',
+  treated: 'status-neutral',
+}
+
+const statusLabelMap: Record<ReportStatus, string> = {
+  monitoring: 'monitoring',
+  warning: 'warning',
+  treated: 'treated',
+}
+
+const timelineMetaText = computed(() => {
+  if (reports.value.length === 0) {
+    return '暂无数据'
+  }
+
+  return `${reports.value.length} 条巡检记录`
 })
+
+const groupedReports = computed(() => {
+  const groups = new Map<string, TimelineCardItem[]>()
+
+  reports.value.forEach((report) => {
+    const dayLabel = formatDayLabel(report.occurredAt)
+    const items = groups.get(dayLabel) ?? []
+
+    items.push({
+      id: report.id,
+      icon: iconMap[report.status],
+      name: report.pestName,
+      severity: severityLabelMap[report.severity],
+      summary: report.summary,
+      status: statusLabelMap[report.status],
+      severityClass: severityClassMap[report.severity],
+      statusClass: statusClassMap[report.status],
+    })
+
+    groups.set(dayLabel, items)
+  })
+
+  return Array.from(groups.entries()).map(([dayLabel, items]) => ({
+    dayLabel,
+    items,
+  }))
+})
+
+const chipClass = (value: FilterValue) => ({
+  'chip-active': activeFilter.value === value,
+  'chip-warn': value === 'warning',
+})
+
+const loadReports = async () => {
+  isLoading.value = true
+  errorMessage.value = ''
+
+  try {
+    reports.value = await reportsApi.list(activeFilter.value === 'all' ? undefined : { status: activeFilter.value })
+  } catch (error) {
+    reports.value = []
+    errorMessage.value = toApiError(error).message
+  } finally {
+    isLoading.value = false
+  }
+}
+
+watch(activeFilter, () => {
+  void loadReports()
+}, { immediate: true })
+
+function formatDayLabel(value: string) {
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return '未知日期'
+  }
+
+  const today = startOfDay(new Date())
+  const target = startOfDay(date)
+  const diffDays = Math.round((today.getTime() - target.getTime()) / 86400000)
+  const formatted = `${date.getMonth() + 1}月${date.getDate()}日`
+
+  if (diffDays === 0) {
+    return `今天 · ${formatted}`
+  }
+
+  if (diffDays === 1) {
+    return `昨天 · ${formatted}`
+  }
+
+  return formatted
+}
+
+function startOfDay(value: Date) {
+  return new Date(value.getFullYear(), value.getMonth(), value.getDate())
+}
 </script>
 
 <style scoped>
@@ -89,6 +226,7 @@ const groupedReports = computed(() => {
 .filter-row {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .chip {
@@ -109,6 +247,16 @@ const groupedReports = computed(() => {
 }
 
 .chip-warn {
+  color: var(--shell-warning);
+}
+
+.state-text {
+  margin: 4px 0;
+  color: var(--shell-text-muted);
+  font-size: 12px;
+}
+
+.state-error {
   color: var(--shell-warning);
 }
 </style>

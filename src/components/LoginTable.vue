@@ -29,53 +29,79 @@
 
       <button class="btn btn-primary login-btn" type="button" @click="handleLogin">
         <LockKeyhole :size="14" color="#ffffff" />
-        <span>登录</span>
+        <span>{{ isSubmitting ? '登录中...' : '登录' }}</span>
       </button>
 
       <button class="btn-soft guest-btn" type="button" @click="handleGuestLogin">
         游客登录，先体验图片检测
       </button>
+
+      <p v-if="errorMessage" class="helper-text error-text">{{ errorMessage }}</p>
     </article>
   </div>
 </template>
 
 <script setup lang="ts">
 import { Check, Eye, EyeOff, LockKeyhole } from 'lucide-vue-next'
-import { ref, computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-const AUTH_STORAGE_KEY = 'manage-system-authenticated'
+import {
+  authApi,
+  clearRememberedPhone,
+  getRememberedPhone,
+  setGuestSession,
+  setRememberedPhone,
+  toApiError,
+} from '../api'
 
 const phone = ref('')
 const password = ref('')
 const rememberMe = ref(false)
 const showPassword = ref(false)
+const isSubmitting = ref(false)
+const errorMessage = ref('')
 const router = useRouter()
 const route = useRoute()
 
 const passwordFieldType = computed(() => (showPassword.value ? 'text' : 'password'))
 
-const handleLogin = () => {
+const handleLogin = async () => {
   if (!phone.value.trim() || !password.value.trim()) {
+    errorMessage.value = '请输入手机号和密码'
     return
   }
 
-  localStorage.setItem(AUTH_STORAGE_KEY, 'true')
-  localStorage.setItem('manage-system-guest', 'false')
+  isSubmitting.value = true
+  errorMessage.value = ''
 
-  const redirectTarget =
-    typeof route.query.redirect === 'string' && route.query.redirect.startsWith('/')
-      ? route.query.redirect
-      : '/home'
-  console.log(redirectTarget);
+  try {
+    await authApi.login({
+      phone: phone.value.trim(),
+      password: password.value,
+    })
 
-  router.push(redirectTarget)
+    if (rememberMe.value) {
+      setRememberedPhone(phone.value.trim())
+    } else {
+      clearRememberedPhone()
+    }
+
+    const redirectTarget =
+      typeof route.query.redirect === 'string' && route.query.redirect.startsWith('/')
+        ? route.query.redirect
+        : '/home'
+
+    await router.push(redirectTarget)
+  } catch (error) {
+    errorMessage.value = toApiError(error).message
+  } finally {
+    isSubmitting.value = false
+  }
 }
 
 const handleGuestLogin = () => {
-  localStorage.removeItem('token')
-  localStorage.setItem(AUTH_STORAGE_KEY, 'false')
-  localStorage.setItem('manage-system-guest', 'true')
+  setGuestSession()
   router.push('/detect')
 }
 
@@ -86,6 +112,18 @@ const toggleRememberMe = () => {
 const toggleShowPassword = () => {
   showPassword.value = !showPassword.value
 }
+
+onMounted(() => {
+  const rememberedPhone = getRememberedPhone()
+  const registerPhone = localStorage.getItem('manage-system-register-phone') ?? ''
+
+  if (!rememberedPhone && !registerPhone) {
+    return
+  }
+
+  phone.value = rememberedPhone || registerPhone
+  rememberMe.value = Boolean(rememberedPhone)
+})
 </script>
 
 <style lang="css" scoped>
@@ -161,6 +199,17 @@ const toggleShowPassword = () => {
   border-radius: 10px;
   font-size: 13px;
   font-weight: 600;
+}
+
+.helper-text {
+  margin: 0;
+  color: var(--shell-text-subtle);
+  font-size: 11px;
+  text-align: center;
+}
+
+.error-text {
+  color: var(--shell-warning);
 }
 
 .toggle-icon {

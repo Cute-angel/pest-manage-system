@@ -3,21 +3,21 @@
     <section class="phone-shell">
       <header class="top-bar home-top">
         <div class="field-sel">
-          <span class="field-text">北区地块</span>
+          <span class="field-text">{{ fieldName }}</span>
           <ChevronDown :size="14" class="icon-muted" />
         </div>
         <div class="weather-wrap">
           <CloudSun :size="16" class="icon-subtle" />
-          <span class="weather-text">24°C · 微风</span>
+          <span class="weather-text">{{ weatherText }}</span>
         </div>
       </header>
 
       <div class="body-scroll home-body">
-        <RouterLink to="/recommendation-detail">
-
-          <LatestSuggestion />
-
+        <RouterLink :to="recommendationLink">
+          <LatestSuggestion :data="summary?.recommendation" :loading="isLoading" :error="errorMessage" />
         </RouterLink>
+
+        <p v-if="errorMessage" class="page-error">{{ errorMessage }}</p>
 
         <div class="divider" />
 
@@ -30,7 +30,7 @@
             <span class="badge-soft">实时更新</span>
           </div>
 
-          <PestTrendCard :data="pestData" />
+          <PestTrendCard :data="pestData" :trend-value="pestTrendChange" />
           <DeviceOnlineRateCard :items="deviceStatus" />
         </section>
       </div>
@@ -41,40 +41,77 @@
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted, ref } from 'vue'
 import { ChevronDown, CloudSun } from 'lucide-vue-next'
+
+import { dashboardApi, toApiError, type DashboardDeviceStatus, type DashboardSummary } from '../api'
 import BottomNav from '../components/BottomNav.vue'
 import DeviceOnlineRateCard from '../components/DeviceOnlineRateCard.vue'
 import LatestSuggestion from '../components/LatestSuggestion.vue'
 import PestTrendCard from '../components/PestTrendCard.vue'
 import '../styles/mobile-shell.css'
 
-type PestDatum = {
-  label: string
-  value: number
-}
+type DeviceTone = 'dot-online' | 'dot-offline' | 'dot-maintenance'
 
-type DeviceStatus = {
+type DeviceStatusCardItem = {
   label: string
   count: number
-  rate: number
-  tone: 'dot-online' | 'dot-offline' | 'dot-maintenance'
+  tone: DeviceTone
 }
 
-const pestData: PestDatum[] = [
-  { label: '3/08', value: 12 },
-  { label: '3/09', value: 15 },
-  { label: '3/10', value: 14 },
-  { label: '3/11', value: 199 },
-  { label: '3/12', value: 20 },
-  { label: '3/13', value: 24 },
-  { label: '3/14', value: 11 },
-]
+const summary = ref<DashboardSummary | null>(null)
+const isLoading = ref(false)
+const errorMessage = ref('')
 
-const deviceStatus: DeviceStatus[] = [
-  { label: '在线', count: 1, rate: 87, tone: 'dot-online' },
-  { label: '离线', count: 3, rate: 9, tone: 'dot-offline' },
-  { label: '维护中', count: 1, rate: 4, tone: 'dot-maintenance' },
-]
+const toneMap: Record<DashboardDeviceStatus['status'], DeviceTone> = {
+  online: 'dot-online',
+  offline: 'dot-offline',
+  maintenance: 'dot-maintenance',
+}
+
+const fieldName = computed(() => summary.value?.fieldName || '地块未配置')
+const weatherText = computed(() => summary.value?.weatherText || '天气数据待同步')
+const pestData = computed(() => summary.value?.pestTrend ?? [])
+const pestTrendChange = computed(() => summary.value?.pestTrendChange ?? 0)
+const deviceStatus = computed<DeviceStatusCardItem[]>(() => {
+  return (summary.value?.deviceStatuses ?? []).map((item) => ({
+    label: item.label,
+    count: item.count,
+    tone: toneMap[item.status],
+  }))
+})
+
+const recommendationLink = computed(() => {
+  const recommendationId = summary.value?.recommendation?.id
+
+  if (!recommendationId) {
+    return '/recommendation-detail'
+  }
+
+  return {
+    path: '/recommendation-detail',
+    query: {
+      id: recommendationId,
+    },
+  }
+})
+
+const loadSummary = async () => {
+  isLoading.value = true
+  errorMessage.value = ''
+
+  try {
+    summary.value = await dashboardApi.getSummary()
+  } catch (error) {
+    errorMessage.value = toApiError(error).message
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(() => {
+  void loadSummary()
+})
 </script>
 
 <style scoped>
@@ -131,20 +168,9 @@ const deviceStatus: DeviceStatus[] = [
   gap: 12px;
 }
 
-.fab-row {
-  padding: 0 20px 8px;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.fab {
-  width: 52px;
-  height: 52px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--shell-primary);
-  display: grid;
-  place-items: center;
-  box-shadow: 0 10px 20px color-mix(in oklab, var(--shell-primary) 22%, transparent);
+.page-error {
+  margin: -12px 0 0;
+  color: var(--shell-warning);
+  font-size: 12px;
 }
 </style>

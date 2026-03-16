@@ -63,9 +63,11 @@ const props = withDefaults(defineProps<{
 
 
 const itemRate = (item: DeviceStatus) => {
-  return computed(()=>{
-    return  item.count / totalDevices.value *100
-  })
+  if (totalDevices.value === 0) {
+    return 0
+  }
+
+  return Math.round((item.count / totalDevices.value) * 100)
 }
 
 

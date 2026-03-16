@@ -65,27 +65,28 @@
 
       <button class="btn btn-primary register-btn" type="button" @click="handleRegister">
         <LockKeyhole :size="14" color="#ffffff" />
-        <span>注册账号</span>
+        <span>{{ isSubmitting ? '提交中...' : '注册账号' }}</span>
       </button>
 
       <p class="helper-text">注册成功后将跳转到登录页</p>
+      <p v-if="errorMessage" class="helper-text error-text">{{ errorMessage }}</p>
     </article>
   </div>
 </template>
 
 <script setup lang="ts">
 import { Check, Eye, EyeOff, LockKeyhole } from 'lucide-vue-next'
-import { computed, onBeforeUnmount, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, ref } from 'vue'
+
+import { authApi, toApiError } from '../api'
 
 const phone = ref('')
 const password = ref('')
 const confirmPassword = ref('')
 const agreed = ref(true)
 const showPassword = ref(false)
-const router = useRouter()
-
-let countdownTimer: ReturnType<typeof setInterval> | null = null
+const isSubmitting = ref(false)
+const errorMessage = ref('')
 
 const isPhoneValid = computed(() => /^1\d{10}$/.test(phone.value.trim()))
 const passwordFieldType = computed(() => (showPassword.value ? 'text' : 'password'))
@@ -102,35 +103,49 @@ const showMessage = (message: string) => {
 }
 
 
-const handleRegister = () => {
-  if (!phone.value.trim()  || !password.value.trim() || !confirmPassword.value.trim()) {
-    showMessage('请完整填写注册信息')
+const handleRegister = async () => {
+  if (!phone.value.trim() || !password.value.trim() || !confirmPassword.value.trim()) {
+    errorMessage.value = '请完整填写注册信息'
     return
   }
 
   if (!isPhoneValid.value) {
-    showMessage('请输入正确的 11 位手机号')
+    errorMessage.value = '请输入正确的 11 位手机号'
     return
   }
 
   if (password.value.trim().length < 6) {
-    showMessage('密码长度不能少于 6 位')
+    errorMessage.value = '密码长度不能少于 6 位'
     return
   }
 
   if (password.value !== confirmPassword.value) {
-    showMessage('两次输入的密码不一致')
+    errorMessage.value = '两次输入的密码不一致'
     return
   }
 
   if (!agreed.value) {
-    showMessage('请先同意用户协议')
+    errorMessage.value = '请先同意用户协议'
     return
   }
 
-  localStorage.setItem('manage-system-register-phone', phone.value.trim())
-  showMessage('注册成功，请登录')
-  backToLogin()
+  isSubmitting.value = true
+  errorMessage.value = ''
+
+  try {
+    await authApi.register({
+      phone: phone.value.trim(),
+      password: password.value,
+    })
+
+    localStorage.setItem('manage-system-register-phone', phone.value.trim())
+    showMessage('注册成功，请登录')
+    backToLogin()
+  } catch (error) {
+    errorMessage.value = toApiError(error).message
+  } finally {
+    isSubmitting.value = false
+  }
 }
 
 const toggleShowPassword = () => {
@@ -141,12 +156,6 @@ const toggleShowPassword = () => {
 const toggleAgreement = () => {
   agreed.value = !agreed.value
 }
-
-onBeforeUnmount(() => {
-  if (countdownTimer) {
-    clearInterval(countdownTimer)
-  }
-})
 </script>
 
 <style lang="css" scoped>
@@ -240,6 +249,10 @@ onBeforeUnmount(() => {
   color: var(--shell-text-subtle);
   font-size: 11px;
   text-align: center;
+}
+
+.error-text {
+  color: var(--shell-warning);
 }
 
 .toggle-icon {

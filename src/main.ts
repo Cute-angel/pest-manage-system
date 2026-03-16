@@ -10,8 +10,7 @@ import RecommendationDetailPage from "./pages/RecommendationDetailPage.vue";
 import MePage from "./pages/MePage.vue";
 import TimelinePage from "./pages/TimelinePage.vue";
 import { createPinia } from "pinia";
-
-const AUTH_STORAGE_KEY = "manage-system-authenticated";
+import { isAuthenticatedSession } from "./api";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -38,7 +37,7 @@ const router = createRouter({
 // route guard to check authentication before each route change
 
 router.beforeEach((to) => {
-  const isAuthenticated = localStorage.getItem(AUTH_STORAGE_KEY) === "true";
+  const isAuthenticated = isAuthenticatedSession();
 
   if (to.meta.requiresAuth && !isAuthenticated) {
     return {
