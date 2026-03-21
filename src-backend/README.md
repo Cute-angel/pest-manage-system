@@ -31,7 +31,12 @@ python src-backend/server.py
 - `POST /api/detections`
 - `POST /api/detection-records`
 
+详细字段契约见：
+
+- [FRONTEND_API_CONTRACT.md](/D:/New%20folder/manage-system/src-backend/FRONTEND_API_CONTRACT.md)
+
 ## Notes
 
 - 所有数据都保存在内存里，重启服务后会重置。
 - `/api/detections` 会根据上传文件名中的关键词返回不同虫害结果，例如 `thrip`、`whitefly`、`healthy`。
+- `POST /api/detection-records` 当前只要求请求体包含 `detectionId`。

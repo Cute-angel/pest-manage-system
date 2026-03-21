@@ -1,19 +1,21 @@
 # Frontend API Contract
 
-这份文档基于 `src/api` 当前实现整理，描述的是前端真实依赖的接口契约，后端联调时应以这里为准。
+这份文档基于当前 `src/api`、页面调用方式和错误处理逻辑整理，描述的是前端真实依赖的接口契约。后端联调请以这里为准。
 
 ## 通用约定
 
 - 默认 Base URL：`http://localhost:8000`
-- 除文件上传外，请求体使用 `application/json`
-- 需要登录的接口会自动带上请求头：
+- 默认请求超时：`15000ms`
+- `/api/detections` 单独使用 `60000ms` 超时
+- 除文件上传外，请求体默认使用 `application/json`
+- 当前端本地存在登录态时，会自动附带请求头：
 
 ```http
 Authorization: Bearer <token>
 ```
 
-- 前端兼容以下两种成功响应格式：
-  - 直接返回对象 / 数组
+- 前端兼容以下成功响应格式：
+  - 直接返回对象或数组
   - 包一层 `data`
 
 ```json
@@ -22,15 +24,15 @@ Authorization: Bearer <token>
 }
 ```
 
-- 列表接口 `/api/reports` 额外兼容以下格式：
+- `/api/reports` 列表接口额外兼容：
+  - 直接返回 `items`
+  - `data.items`
 
 ```json
 {
   "items": []
 }
 ```
-
-或：
 
 ```json
 {
@@ -40,16 +42,14 @@ Authorization: Bearer <token>
 }
 ```
 
-- 出错时前端优先读取这些字段作为错误文案：
+- 出错时前端优先读取以下字段作为错误文案：
   - `message`
   - `error`
-- 若接口返回 `401`，前端会清空本地登录态。
+- 接口返回 `401` 时，前端会清空本地登录态。
 
-## 数据类型
+## 枚举值
 
 ### DeviceStatusKind
-
-可选值：
 
 - `online`
 - `offline`
@@ -57,23 +57,17 @@ Authorization: Bearer <token>
 
 ### ReportSeverity
 
-可选值：
-
 - `light`
 - `medium`
 - `high`
 
 ### ReportStatus
 
-可选值：
-
 - `monitoring`
 - `warning`
 - `treated`
 
 ### DetectionKind
-
-可选值：
 
 - `pest`
 - `clean`
@@ -84,7 +78,7 @@ Authorization: Bearer <token>
 
 - 方法：`POST`
 - 路径：`/api/auth/login`
-- 是否鉴权：否
+- 鉴权：否
 
 请求体：
 
@@ -121,14 +115,14 @@ Authorization: Bearer <token>
 - `user.id: string` 必填
 - `user.name: string` 必填
 - `user.phone: string` 必填
-- `user.role?: string` 可选
-- `user.farmName?: string` 可选
+- `user.role?: string`
+- `user.farmName?: string`
 
 ### 2. 注册
 
 - 方法：`POST`
 - 路径：`/api/auth/register`
-- 是否鉴权：否
+- 鉴权：否
 
 请求体：
 
@@ -153,23 +147,28 @@ Authorization: Bearer <token>
 - `userId?: string`
 - `message?: string`
 
+说明：
+
+- 前端兼容 `200` 或 `201`。
+
 ### 3. 退出登录
 
 - 方法：`POST`
 - 路径：`/api/auth/logout`
-- 是否鉴权：是
+- 鉴权：可选，有 token 时会自动携带
 
 请求体：无
 
 成功响应：
 
-- 前端不消费具体字段，返回 `200` 即可。
+- 前端不消费响应体字段。
+- 返回任意 `2xx` 都可以，常见为 `200` 或 `204`。
 
 ### 4. 获取当前用户信息
 
 - 方法：`GET`
 - 路径：`/api/users/me`
-- 是否鉴权：是
+- 鉴权：是
 
 成功响应：
 
@@ -199,14 +198,13 @@ Authorization: Bearer <token>
 
 说明：
 
-- `onlineDeviceCount` 目前仍在用户信息类型里，但“我的”页面在线设备展示已经改为复用 dashboard 数据。
-- 这个字段暂时建议继续保留，避免前端其他位置后续直接使用时缺字段。
+- `onlineDeviceCount` 当前仍保留在用户信息中，虽然“我的”页在线设备展示已主要复用 dashboard 数据。
 
 ### 5. 获取首页 Dashboard 摘要
 
 - 方法：`GET`
 - 路径：`/api/dashboard/summary`
-- 是否鉴权：是
+- 鉴权：是
 
 成功响应：
 
@@ -238,48 +236,20 @@ Authorization: Bearer <token>
 - `fieldName: string`
 - `weatherText: string`
 - `recommendation: DashboardRecommendationPreview | null`
-- `pestTrend: DashboardTrendPoint[]`
+- `pestTrend: Array<{ label: string; value: number }>`
 - `pestTrendChange: number`
-- `deviceStatuses: DashboardDeviceStatus[]`
-
-其中：
-
-```json
-{
-  "recommendation": {
-    "id": "string",
-    "title": "string",
-    "description": "string",
-    "evidence": "string"
-  }
-}
-```
-
-```json
-{
-  "label": "3/16",
-  "value": 18
-}
-```
-
-```json
-{
-  "label": "在线",
-  "count": 12,
-  "status": "online"
-}
-```
+- `deviceStatuses: Array<{ label: string; count: number; status: "online" | "offline" | "maintenance" }>`
 
 说明：
 
-- `pestTrendChange` 是数值，前端组件内部会拼成 `较上周 +18%` 这类文案。
-- `deviceStatuses` 中前端会按 `status === "online"` 找在线设备数量。
+- `pestTrendChange` 是必填数值，前端会自行拼接展示文案。
+- `deviceStatuses` 中前端会按 `status === "online"` 提取在线设备数。
 
 ### 6. 获取最新推荐详情
 
 - 方法：`GET`
 - 路径：`/api/recommendations/latest`
-- 是否鉴权：是
+- 鉴权：建议返回需登录结果；前端可处理 `401`
 
 成功响应：
 
@@ -309,21 +279,44 @@ Authorization: Bearer <token>
 
 - 方法：`GET`
 - 路径：`/api/recommendations/:id`
-- 是否鉴权：是
+- 鉴权：建议返回需登录结果；前端可处理 `401`
 
-成功响应结构与 `/api/recommendations/latest` 完全一致。
+成功响应结构与 `/api/recommendations/latest` 一致。
 
 ### 8. 获取报告列表
 
 - 方法：`GET`
 - 路径：`/api/reports`
-- 是否鉴权：是
+- 鉴权：是
 
 查询参数：
 
 - `status?: "monitoring" | "warning" | "treated"`
+- `limit?: number`
+- `offset?: number`
+- `cursor?: string`
 
-成功响应示例：
+推荐成功响应：
+
+```json
+{
+  "items": [
+    {
+      "id": "aphid-north-plot",
+      "pestName": "蚜虫",
+      "severity": "medium",
+      "summary": "东侧幼苗区叶背虫点持续增加，建议当日完成复查。",
+      "status": "monitoring",
+      "occurredAt": "2026-03-16T08:30:00Z"
+    }
+  ],
+  "hasMore": true,
+  "nextCursor": "5",
+  "total": 12
+}
+```
+
+兼容成功响应：
 
 ```json
 [
@@ -340,22 +333,26 @@ Authorization: Bearer <token>
 
 字段要求：
 
-- `id: string`
-- `pestName: string`
-- `severity: "light" | "medium" | "high"`
-- `summary: string`
-- `status: "monitoring" | "warning" | "treated"`
-- `occurredAt: string`
+- `items[].id: string`
+- `items[].pestName: string`
+- `items[].severity: "light" | "medium" | "high"`
+- `items[].summary: string`
+- `items[].status: "monitoring" | "warning" | "treated"`
+- `items[].occurredAt: string`
+- `hasMore?: boolean`
+- `nextCursor?: string`
+- `total?: number`
 
 说明：
 
 - `occurredAt` 建议返回 ISO 8601 时间字符串。
+- 前端优先支持分页结构；如果只返回数组，也能工作，但 `hasMore` 会退化为按 `limit` 推断。
 
 ### 9. 获取报告详情
 
 - 方法：`GET`
 - 路径：`/api/reports/:id`
-- 是否鉴权：是
+- 鉴权：是
 
 成功响应：
 
@@ -379,7 +376,6 @@ Authorization: Bearer <token>
 字段要求：
 
 - 需包含列表接口全部字段
-- 另外还需要：
 - `title: string`
 - `imageUrl: string`
 - `deviceName: string`
@@ -391,7 +387,7 @@ Authorization: Bearer <token>
 
 - 方法：`POST`
 - 路径：`/api/detections`
-- 是否鉴权：是
+- 鉴权：否，游客可用
 - Content-Type：`multipart/form-data`
 
 表单字段：
@@ -419,7 +415,7 @@ Authorization: Bearer <token>
 
 字段要求：
 
-- `id?: string`
+- `id: string`
 - `kind: "pest" | "clean"`
 - `title: string`
 - `confidence: number`
@@ -433,41 +429,25 @@ Authorization: Bearer <token>
 说明：
 
 - 当 `kind = "clean"` 时，`pestCounts` 也必须返回数组，允许为空数组 `[]`。
+- `annotatedImageUrl` 允许为空字符串，前端会回退展示原图。
 
 ### 11. 保存识别记录
 
 - 方法：`POST`
 - 路径：`/api/detection-records`
-- 是否鉴权：是
+- 鉴权：是
 
 请求体：
 
 ```json
 {
-  "detectionId": "det-123",
-  "sourceImageName": "leaf.jpg",
-  "result": {
-    "id": "det-123",
-    "kind": "pest",
-    "title": "识别到疑似蚜虫",
-    "confidence": 95,
-    "summary": "叶背与嫩梢位置存在明显聚集虫点，符合蚜虫活动特征，建议尽快安排二次巡查。",
-    "annotatedImageUrl": "https://example.com/annotated.jpg",
-    "pestCounts": [
-      { "label": "蚜虫", "count": 6 }
-    ],
-    "pestName": "蚜虫",
-    "severity": "偏高",
-    "advice": "建议优先巡查高温干燥区域，并在 12 小时内完成局部点状防治与复拍。"
-  }
+  "detectionId": "det-123"
 }
 ```
 
 字段要求：
 
-- `detectionId?: string`
-- `sourceImageName: string`
-- `result: DetectionResult`
+- `detectionId: string`
 
 成功响应：
 
@@ -481,10 +461,16 @@ Authorization: Bearer <token>
 
 - `success: boolean`
 
+说明：
+
+- 前端当前只依赖 `success`，如果后端额外返回 `recordId` 等字段不会有问题。
+
 ## 后端实现注意点
 
 - 登录和注册都要接收 `passwordHash`，不要只接受 `password`。
-- `/api/dashboard/summary` 里的 `pestTrendChange` 现在是必需字段。
-- `/api/reports` 列表接口要支持按 `status` 过滤。
+- `/api/dashboard/summary` 的 `pestTrendChange` 是必填字段。
+- `/api/reports` 应支持 `status` 过滤，并建议支持 `limit`、`offset`、`cursor` 分页。
 - `/api/detections` 必须支持 `multipart/form-data` 文件上传。
+- `/api/detections` 当前按产品交互应允许未登录访问。
+- `/api/detection-records` 当前请求体只需要 `detectionId`。
 - 所有需要登录的接口在 token 无效时应返回 `401`。

@@ -8,7 +8,7 @@ export interface PestCountItem {
 }
 
 export interface DetectionResult {
-  id?: string
+  id: string
   kind: DetectionKind
   title: string
   confidence: number
@@ -21,9 +21,7 @@ export interface DetectionResult {
 }
 
 export interface CreateDetectionRecordPayload {
-  detectionId?: string
-  sourceImageName: string
-  result: DetectionResult
+  detectionId: string
 }
 
 export const detectionsApi = {
@@ -35,12 +33,13 @@ export const detectionsApi = {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      timeout: 1000*60,
     })
 
     return extractData(response.data)
   },
 
-  async createRecord(payload: CreateDetectionRecordPayload) {
+  async uploadRecord(payload: CreateDetectionRecordPayload) {
     const response = await http.post<{ success: boolean } | { data: { success: boolean } }>(
       '/api/detection-records',
       payload,

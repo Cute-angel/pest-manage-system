@@ -12,7 +12,7 @@
         </div>
       </header>
 
-      <div class="body-scroll home-body">
+      <PullToRefresh class="body-scroll home-body" :on-refresh="loadSummary">
         <RouterLink :to="recommendationLink">
           <LatestSuggestion :data="summary?.recommendation" :loading="isLoading" :error="errorMessage" />
         </RouterLink>
@@ -21,7 +21,7 @@
 
         <div class="divider" />
 
-        <section class="stack-16">
+        <section class="stack-16 ">
           <div class="section-head">
             <div>
               <h2 class="section-title">虫害监测概览</h2>
@@ -33,7 +33,7 @@
           <PestTrendCard :data="pestData" :trend-value="pestTrendChange" />
           <DeviceOnlineRateCard :items="deviceStatus" />
         </section>
-      </div>
+      </PullToRefresh>
 
       <BottomNav active="home" />
     </section>
@@ -49,6 +49,7 @@ import BottomNav from '../components/BottomNav.vue'
 import DeviceOnlineRateCard from '../components/DeviceOnlineRateCard.vue'
 import LatestSuggestion from '../components/LatestSuggestion.vue'
 import PestTrendCard from '../components/PestTrendCard.vue'
+import PullToRefresh from '../components/PullToRefresh.vue'
 import '../styles/mobile-shell.css'
 
 type DeviceTone = 'dot-online' | 'dot-offline' | 'dot-maintenance'
@@ -152,13 +153,13 @@ onMounted(() => {
   padding: 20px 20px 12px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
 }
 
 .stack-16 {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  padding-bottom: 1rem;
 }
 
 .section-head {

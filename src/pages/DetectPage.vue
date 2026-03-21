@@ -199,10 +199,8 @@ async function markUploaded() {
   recordMessage.value = ''
 
   try {
-    await detectionsApi.createRecord({
-      detectionId: analysis.value.id,
-      sourceImageName: selectedFileName.value,
-      result: analysis.value,
+    await detectionsApi.uploadRecord({
+      detectionId: analysis.value.id
     })
 
     recordStatus.value = 'uploaded'

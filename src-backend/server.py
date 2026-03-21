@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import time
 import uuid
 from copy import deepcopy
 from datetime import datetime, timezone
@@ -14,10 +15,41 @@ from urllib.parse import parse_qs, urlparse
 
 HOST = "127.0.0.1"
 PORT = 8000
+DEFAULT_REPORTS_PAGE_SIZE = 20
 
 
 def utc_now() -> datetime:
     return datetime.now(timezone.utc)
+
+
+def parse_positive_int(value: str | None, default: int, *, minimum: int = 0, maximum: int | None = None) -> int:
+    try:
+        parsed = int(value) if value is not None else default
+    except (TypeError, ValueError):
+        return default
+
+    if parsed < minimum:
+        return minimum
+
+    if maximum is not None and parsed > maximum:
+        return maximum
+
+    return parsed
+
+
+def build_reports_page(items: list[dict[str, Any]], limit: int, offset: int) -> dict[str, Any]:
+    total = len(items)
+    start = min(offset, total)
+    end = min(start + limit, total)
+    page_items = items[start:end]
+    has_more = end < total
+
+    return {
+        "items": page_items,
+        "hasMore": has_more,
+        "nextCursor": str(end) if has_more else None,
+        "total": total,
+    }
 
 
 DEFAULT_USER = {
@@ -48,6 +80,174 @@ LATEST_RECOMMENDATION_ID = "rec-north-aphid"
 
 
 REPORTS: list[dict[str, Any]] = [
+    {
+        "id": "aphid-north-plot",
+        "pestName": "蚜虫",
+        "severity": "medium",
+        "summary": "东侧幼苗区叶背虫点持续增加，建议当日完成复查。",
+        "status": "monitoring",
+        "occurredAt": "2026-03-16T08:30:00Z",
+        "title": "蚜虫监测报告",
+        "imageUrl": "https://images.unsplash.com/photo-1615486363979-86dcbefb5076?auto=format&fit=crop&w=1200&q=80",
+        "deviceName": "诱捕设备 A-03",
+        "locationName": "北区 2 号棚东侧",
+        "recommendationText": "建议在今日 18:00 前完成局部点状防治，并在处理后 24 小时内复测同一区域虫口密度。",
+        "recommendationNote": "重点关注叶背与嫩梢交界处，避免遗漏高湿阴影带。",
+    },
+    {
+        "id": "aphid-north-plot",
+        "pestName": "蚜虫",
+        "severity": "medium",
+        "summary": "东侧幼苗区叶背虫点持续增加，建议当日完成复查。",
+        "status": "monitoring",
+        "occurredAt": "2026-03-16T08:30:00Z",
+        "title": "蚜虫监测报告",
+        "imageUrl": "https://images.unsplash.com/photo-1615486363979-86dcbefb5076?auto=format&fit=crop&w=1200&q=80",
+        "deviceName": "诱捕设备 A-03",
+        "locationName": "北区 2 号棚东侧",
+        "recommendationText": "建议在今日 18:00 前完成局部点状防治，并在处理后 24 小时内复测同一区域虫口密度。",
+        "recommendationNote": "重点关注叶背与嫩梢交界处，避免遗漏高湿阴影带。",
+    },
+    {
+        "id": "aphid-north-plot",
+        "pestName": "蚜虫",
+        "severity": "medium",
+        "summary": "东侧幼苗区叶背虫点持续增加，建议当日完成复查。",
+        "status": "monitoring",
+        "occurredAt": "2026-03-16T08:30:00Z",
+        "title": "蚜虫监测报告",
+        "imageUrl": "https://images.unsplash.com/photo-1615486363979-86dcbefb5076?auto=format&fit=crop&w=1200&q=80",
+        "deviceName": "诱捕设备 A-03",
+        "locationName": "北区 2 号棚东侧",
+        "recommendationText": "建议在今日 18:00 前完成局部点状防治，并在处理后 24 小时内复测同一区域虫口密度。",
+        "recommendationNote": "重点关注叶背与嫩梢交界处，避免遗漏高湿阴影带。",
+    },
+    {
+        "id": "aphid-north-plot",
+        "pestName": "蚜虫",
+        "severity": "medium",
+        "summary": "东侧幼苗区叶背虫点持续增加，建议当日完成复查。",
+        "status": "monitoring",
+        "occurredAt": "2026-03-16T08:30:00Z",
+        "title": "蚜虫监测报告",
+        "imageUrl": "https://images.unsplash.com/photo-1615486363979-86dcbefb5076?auto=format&fit=crop&w=1200&q=80",
+        "deviceName": "诱捕设备 A-03",
+        "locationName": "北区 2 号棚东侧",
+        "recommendationText": "建议在今日 18:00 前完成局部点状防治，并在处理后 24 小时内复测同一区域虫口密度。",
+        "recommendationNote": "重点关注叶背与嫩梢交界处，避免遗漏高湿阴影带。",
+    },
+    {
+        "id": "aphid-north-plot",
+        "pestName": "蚜虫",
+        "severity": "medium",
+        "summary": "东侧幼苗区叶背虫点持续增加，建议当日完成复查。",
+        "status": "monitoring",
+        "occurredAt": "2026-03-16T08:30:00Z",
+        "title": "蚜虫监测报告",
+        "imageUrl": "https://images.unsplash.com/photo-1615486363979-86dcbefb5076?auto=format&fit=crop&w=1200&q=80",
+        "deviceName": "诱捕设备 A-03",
+        "locationName": "北区 2 号棚东侧",
+        "recommendationText": "建议在今日 18:00 前完成局部点状防治，并在处理后 24 小时内复测同一区域虫口密度。",
+        "recommendationNote": "重点关注叶背与嫩梢交界处，避免遗漏高湿阴影带。",
+    },
+    {
+        "id": "aphid-north-plot",
+        "pestName": "蚜虫",
+        "severity": "medium",
+        "summary": "东侧幼苗区叶背虫点持续增加，建议当日完成复查。",
+        "status": "monitoring",
+        "occurredAt": "2026-03-16T08:30:00Z",
+        "title": "蚜虫监测报告",
+        "imageUrl": "https://images.unsplash.com/photo-1615486363979-86dcbefb5076?auto=format&fit=crop&w=1200&q=80",
+        "deviceName": "诱捕设备 A-03",
+        "locationName": "北区 2 号棚东侧",
+        "recommendationText": "建议在今日 18:00 前完成局部点状防治，并在处理后 24 小时内复测同一区域虫口密度。",
+        "recommendationNote": "重点关注叶背与嫩梢交界处，避免遗漏高湿阴影带。",
+    },
+    {
+        "id": "aphid-north-plot",
+        "pestName": "蚜虫",
+        "severity": "medium",
+        "summary": "东侧幼苗区叶背虫点持续增加，建议当日完成复查。",
+        "status": "monitoring",
+        "occurredAt": "2026-03-16T08:30:00Z",
+        "title": "蚜虫监测报告",
+        "imageUrl": "https://images.unsplash.com/photo-1615486363979-86dcbefb5076?auto=format&fit=crop&w=1200&q=80",
+        "deviceName": "诱捕设备 A-03",
+        "locationName": "北区 2 号棚东侧",
+        "recommendationText": "建议在今日 18:00 前完成局部点状防治，并在处理后 24 小时内复测同一区域虫口密度。",
+        "recommendationNote": "重点关注叶背与嫩梢交界处，避免遗漏高湿阴影带。",
+    },
+    {
+        "id": "aphid-north-plot",
+        "pestName": "蚜虫",
+        "severity": "medium",
+        "summary": "东侧幼苗区叶背虫点持续增加，建议当日完成复查。",
+        "status": "monitoring",
+        "occurredAt": "2026-03-16T08:30:00Z",
+        "title": "蚜虫监测报告",
+        "imageUrl": "https://images.unsplash.com/photo-1615486363979-86dcbefb5076?auto=format&fit=crop&w=1200&q=80",
+        "deviceName": "诱捕设备 A-03",
+        "locationName": "北区 2 号棚东侧",
+        "recommendationText": "建议在今日 18:00 前完成局部点状防治，并在处理后 24 小时内复测同一区域虫口密度。",
+        "recommendationNote": "重点关注叶背与嫩梢交界处，避免遗漏高湿阴影带。",
+    },
+    {
+        "id": "aphid-north-plot",
+        "pestName": "蚜虫",
+        "severity": "medium",
+        "summary": "东侧幼苗区叶背虫点持续增加，建议当日完成复查。",
+        "status": "monitoring",
+        "occurredAt": "2026-03-16T08:30:00Z",
+        "title": "蚜虫监测报告",
+        "imageUrl": "https://images.unsplash.com/photo-1615486363979-86dcbefb5076?auto=format&fit=crop&w=1200&q=80",
+        "deviceName": "诱捕设备 A-03",
+        "locationName": "北区 2 号棚东侧",
+        "recommendationText": "建议在今日 18:00 前完成局部点状防治，并在处理后 24 小时内复测同一区域虫口密度。",
+        "recommendationNote": "重点关注叶背与嫩梢交界处，避免遗漏高湿阴影带。",
+    },
+    {
+        "id": "aphid-north-plot",
+        "pestName": "蚜虫",
+        "severity": "medium",
+        "summary": "东侧幼苗区叶背虫点持续增加，建议当日完成复查。",
+        "status": "monitoring",
+        "occurredAt": "2026-03-16T08:30:00Z",
+        "title": "蚜虫监测报告",
+        "imageUrl": "https://images.unsplash.com/photo-1615486363979-86dcbefb5076?auto=format&fit=crop&w=1200&q=80",
+        "deviceName": "诱捕设备 A-03",
+        "locationName": "北区 2 号棚东侧",
+        "recommendationText": "建议在今日 18:00 前完成局部点状防治，并在处理后 24 小时内复测同一区域虫口密度。",
+        "recommendationNote": "重点关注叶背与嫩梢交界处，避免遗漏高湿阴影带。",
+    },
+    {
+        "id": "aphid-north-plot",
+        "pestName": "蚜虫",
+        "severity": "medium",
+        "summary": "东侧幼苗区叶背虫点持续增加，建议当日完成复查。",
+        "status": "monitoring",
+        "occurredAt": "2026-03-16T08:30:00Z",
+        "title": "蚜虫监测报告",
+        "imageUrl": "https://images.unsplash.com/photo-1615486363979-86dcbefb5076?auto=format&fit=crop&w=1200&q=80",
+        "deviceName": "诱捕设备 A-03",
+        "locationName": "北区 2 号棚东侧",
+        "recommendationText": "建议在今日 18:00 前完成局部点状防治，并在处理后 24 小时内复测同一区域虫口密度。",
+        "recommendationNote": "重点关注叶背与嫩梢交界处，避免遗漏高湿阴影带。",
+    },
+    {
+        "id": "aphid-north-plot",
+        "pestName": "蚜虫",
+        "severity": "medium",
+        "summary": "东侧幼苗区叶背虫点持续增加，建议当日完成复查。",
+        "status": "monitoring",
+        "occurredAt": "2026-03-16T08:30:00Z",
+        "title": "蚜虫监测报告",
+        "imageUrl": "https://images.unsplash.com/photo-1615486363979-86dcbefb5076?auto=format&fit=crop&w=1200&q=80",
+        "deviceName": "诱捕设备 A-03",
+        "locationName": "北区 2 号棚东侧",
+        "recommendationText": "建议在今日 18:00 前完成局部点状防治，并在处理后 24 小时内复测同一区域虫口密度。",
+        "recommendationNote": "重点关注叶背与嫩梢交界处，避免遗漏高湿阴影带。",
+    },
     {
         "id": "aphid-north-plot",
         "pestName": "蚜虫",
@@ -169,6 +369,7 @@ def dashboard_summary() -> dict[str, Any]:
 
 
 def detection_result_for_filename(filename: str) -> dict[str, Any]:
+    time.sleep(10)
     lower = filename.lower()
     detection_id = f"det-{uuid.uuid4().hex[:10]}"
 
@@ -257,11 +458,15 @@ class MockApiHandler(BaseHTTPRequestHandler):
         if parsed.path == "/api/reports":
             query = parse_qs(parsed.query)
             status_filter = (query.get("status") or [None])[0]
+            limit = parse_positive_int((query.get("limit") or [None])[0], DEFAULT_REPORTS_PAGE_SIZE, minimum=1, maximum=100)
+            cursor = (query.get("cursor") or [None])[0]
+            offset_fallback = (query.get("offset") or [None])[0]
+            offset = parse_positive_int(cursor, parse_positive_int(offset_fallback, 0), minimum=0)
             items = deepcopy(REPORTS)
             if status_filter:
                 items = [item for item in items if item["status"] == status_filter]
 
-            self._json_response(HTTPStatus.OK, {"items": items})
+            self._json_response(HTTPStatus.OK, build_reports_page(items, limit, offset))
             return
 
         if parsed.path.startswith("/api/reports/"):

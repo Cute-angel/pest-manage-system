@@ -6,7 +6,12 @@
         <span class="weather">{{ timelineMetaText }}</span>
       </header>
 
-      <div class="body-scroll timeline-body">
+      <PullToRefresh
+        ref="pullToRefreshRef"
+        class="body-scroll timeline-body"
+        :on-refresh="loadReports"
+        @scroll.passive="handleScroll"
+      >
         <div class="filter-row">
           <button
             v-for="filter in filters"
@@ -22,7 +27,7 @@
 
         <p v-if="isLoading" class="state-text">正在加载时间线...</p>
         <p v-else-if="errorMessage" class="state-text state-error">{{ errorMessage }}</p>
-        <p v-else-if="groupedReports.length === 0" class="state-text">当前没有可展示的巡检记录。</p>
+        <p v-else-if="reports.length === 0" class="state-text">当前没有可展示的巡检记录。</p>
 
         <section v-for="group in groupedReports" :key="group.dayLabel" class="timeline-group">
           <p class="date eyebrow-text">{{ group.dayLabel }}</p>
@@ -33,7 +38,14 @@
             :to="`/timeline/${item.id}`"
           />
         </section>
-      </div>
+
+        <p v-if="isLoadingMore" class="state-text">正在加载更多...</p>
+        <div v-else-if="reports.length > 0 && !hasMore">
+          <div class="divider divider-neutral  my-3 end-text">
+            已经到底了
+          </div>
+        </div>
+      </PullToRefresh>
 
       <BottomNav active="timeline" />
     </section>
@@ -41,12 +53,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import {computed, ComputedRef, nextTick, ref, watch} from 'vue'
 import { Bug, Leaf, ShieldCheck } from 'lucide-vue-next'
 import type { Component } from 'vue'
 
 import { reportsApi, toApiError, type ReportSeverity, type ReportStatus, type ReportSummary } from '../api'
 import BottomNav from '../components/BottomNav.vue'
+import PullToRefresh from '../components/PullToRefresh.vue'
 import TimelineItemCard from '../components/TimelineItemCard.vue'
 import '../styles/mobile-shell.css'
 
@@ -63,6 +76,10 @@ type TimelineCardItem = {
 
 type FilterValue = 'all' | ReportStatus
 
+type PullToRefreshExposed = {
+  containerRef: HTMLElement | null
+}
+
 const filters: Array<{ label: string; value: FilterValue }> = [
   { label: '全部', value: 'all' },
   { label: 'monitoring', value: 'monitoring' },
@@ -72,8 +89,14 @@ const filters: Array<{ label: string; value: FilterValue }> = [
 
 const reports = ref<ReportSummary[]>([])
 const isLoading = ref(false)
+const isLoadingMore = ref(false)
 const errorMessage = ref('')
 const activeFilter = ref<FilterValue>('all')
+const hasMore = ref(true)
+const nextCursor = ref<string>()
+const totalCount = ref<number>()
+const pullToRefreshRef = ref<PullToRefreshExposed | null>(null)
+const PAGE_SIZE = 5
 
 const iconMap: Record<ReportStatus, Component> = {
   monitoring: Bug,
@@ -105,15 +128,20 @@ const statusLabelMap: Record<ReportStatus, string> = {
   treated: 'treated',
 }
 
-const timelineMetaText = computed(() => {
-  if (reports.value.length === 0) {
+const timelineMetaText:ComputedRef<string> = computed(() => {
+  const count = totalCount.value ?? reports.value.length
+
+  if (count === 0) {
     return '暂无数据'
   }
 
-  return `${reports.value.length} 条巡检记录`
+  return `${count} 条巡检记录`
 })
 
+
+// return grouped type
 const groupedReports = computed(() => {
+  // 接口返回的是扁平列表，页面展示时按日期重新聚合。
   const groups = new Map<string, TimelineCardItem[]>()
 
   reports.value.forEach((report) => {
@@ -148,20 +176,91 @@ const chipClass = (value: FilterValue) => ({
 const loadReports = async () => {
   isLoading.value = true
   errorMessage.value = ''
-
+  hasMore.value = true
+  nextCursor.value = undefined
+  totalCount.value = undefined
+  reports.value = []
+  // send get to backend
   try {
-    reports.value = await reportsApi.list(activeFilter.value === 'all' ? undefined : { status: activeFilter.value })
+    const result = await reportsApi.list({
+      ...(activeFilter.value === 'all' ? {} : { status: activeFilter.value }),
+      limit: PAGE_SIZE,
+      offset: 0,
+    })
+    // update
+    reports.value = result.items
+    hasMore.value = result.hasMore
+    nextCursor.value = result.nextCursor
+    totalCount.value = result.total
   } catch (error) {
     reports.value = []
     errorMessage.value = toApiError(error).message
+    hasMore.value = false
   } finally {
     isLoading.value = false
+    await nextTick()
+    tryLoadMore()
   }
 }
 
+const loadMoreReports = async () => {
+  console.log('loadMoreReports')
+  // 只在当前没有进行中的请求时，继续拉取下一页。
+  if (isLoading.value || isLoadingMore.value || !hasMore.value) {
+    return
+  }
+
+  isLoadingMore.value = true
+
+  try {
+    const result = await reportsApi.list({
+      ...(activeFilter.value === 'all' ? {} : { status: activeFilter.value }),
+      limit: PAGE_SIZE,
+      offset: reports.value.length,
+      cursor: nextCursor.value,
+    })
+    reports.value = [...reports.value, ...result.items]
+    hasMore.value = result.hasMore
+    nextCursor.value = result.nextCursor
+    totalCount.value = result.total ?? totalCount.value
+  } catch (error) {
+    errorMessage.value = toApiError(error).message
+  } finally {
+    isLoadingMore.value = false
+    await nextTick()
+    tryLoadMore()
+  }
+}
+
+// refresh list when change the type
 watch(activeFilter, () => {
   void loadReports()
 }, { immediate: true })
+
+function handleScroll(event: Event) {
+  const target = event.target as HTMLElement | null
+
+  if (!target) {
+    return
+  }
+
+  tryLoadMore()
+}
+
+function tryLoadMore() {
+  const container = pullToRefreshRef.value?.containerRef
+
+  if (!container || isLoading.value || isLoadingMore.value || !hasMore.value) {
+    return
+  }
+  console.log('load more')
+  // 提前一点发起下一页请求，避免用户滚到底部后才开始等待。
+  const remaining = container.scrollHeight - container.scrollTop - container.clientHeight
+
+  if (remaining <= 240 || container.scrollHeight <= container.clientHeight + 1) {
+    void loadMoreReports()
+  }
+}
 
 function formatDayLabel(value: string) {
   const date = new Date(value)
@@ -258,5 +357,9 @@ function startOfDay(value: Date) {
 
 .state-error {
   color: var(--shell-warning);
+}
+
+.end-text {
+  color: var(--shell-text-muted);
 }
 </style>

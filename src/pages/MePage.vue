@@ -6,7 +6,7 @@
         <Bell :size="18" class="icon-top" />
       </header>
 
-      <div class="body-scroll me-body">
+      <PullToRefresh class="body-scroll me-body" :on-refresh="loadPageData">
         <article class="card profile-card">
           <div class="avatar">
             <User :size="18" />
@@ -65,7 +65,7 @@
           {{ isLoggingOut ? '退出中...' : '退出登录' }}
         </button>
         <div class="spacer" />
-      </div>
+      </PullToRefresh>
 
       <BottomNav active="me" />
     </section>
@@ -79,6 +79,7 @@ import { useRouter } from 'vue-router'
 
 import { authApi, dashboardApi, toApiError, userApi, type DashboardSummary, type UserProfile } from '../api'
 import BottomNav from '../components/BottomNav.vue'
+import PullToRefresh from '../components/PullToRefresh.vue'
 import '../styles/mobile-shell.css'
 
 const router = useRouter()

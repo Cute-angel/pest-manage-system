@@ -23,17 +23,62 @@ export interface ReportDetail extends ReportSummary {
 
 export interface ReportListParams {
   status?: ReportStatus
+  limit?: number
+  offset?: number
+  cursor?: string
+}
+
+export interface ReportListResult {
+  items: ReportSummary[]
+  hasMore: boolean
+  nextCursor?: string
+  total?: number
 }
 
 export const reportsApi = {
   async list(params?: ReportListParams) {
     const response = await http.get<
-      ReportSummary[] | { items: ReportSummary[] } | { data: ReportSummary[] } | { data: { items: ReportSummary[] } }
+      | ReportSummary[]
+      | { items: ReportSummary[]; hasMore?: boolean; nextCursor?: string; total?: number }
+      | { data: ReportSummary[] }
+      | { data: { items: ReportSummary[]; hasMore?: boolean; nextCursor?: string; total?: number } }
     >('/api/reports', {
       params,
     })
 
-    return extractItems(response.data)
+    const items = extractItems(response.data)
+
+    if (Array.isArray(response.data)) {
+      return {
+        items,
+        hasMore: params?.limit ? items.length >= params.limit : false,
+      } satisfies ReportListResult
+    }
+
+    if ('items' in response.data) {
+      return {
+        items,
+        hasMore: response.data.hasMore ?? (params?.limit ? items.length >= params.limit : false),
+        nextCursor: response.data.nextCursor,
+        total: response.data.total,
+      } satisfies ReportListResult
+    }
+
+    const extracted = response.data.data
+
+    if (Array.isArray(extracted)) {
+      return {
+        items,
+        hasMore: params?.limit ? items.length >= params.limit : false,
+      } satisfies ReportListResult
+    }
+
+    return {
+      items,
+      hasMore: extracted.hasMore ?? (params?.limit ? items.length >= params.limit : false),
+      nextCursor: extracted.nextCursor,
+      total: extracted.total,
+    } satisfies ReportListResult
   },
 
   async getById(id: string) {
