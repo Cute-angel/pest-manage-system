@@ -8,43 +8,46 @@
 
       <PullToRefresh
         ref="pullToRefreshRef"
-        class="body-scroll timeline-body"
+        class="body-scroll"
         :on-refresh="loadReports"
         @scroll.passive="handleScroll"
       >
-        <div class="filter-row">
-          <button
-            v-for="filter in filters"
-            :key="filter.value"
-            class="chip"
-            :class="chipClass(filter.value)"
-            type="button"
-            @click="activeFilter = filter.value"
-          >
-            {{ filter.label }}
-          </button>
-        </div>
+        <div class="timeline-body">
+          <div class="filter-row">
+            <button
+                v-for="filter in filters"
+                :key="filter.value"
+                class="chip"
+                :class="chipClass(filter.value)"
+                type="button"
+                @click="activeFilter = filter.value"
+            >
+              {{ filter.label }}
+            </button>
+          </div>
 
-        <p v-if="isLoading" class="state-text">正在加载时间线...</p>
-        <p v-else-if="errorMessage" class="state-text state-error">{{ errorMessage }}</p>
-        <p v-else-if="reports.length === 0" class="state-text">当前没有可展示的巡检记录。</p>
+          <p v-if="isLoading" class="state-text">正在加载时间线...</p>
+          <p v-else-if="errorMessage" class="state-text state-error">{{ errorMessage }}</p>
+          <p v-else-if="reports.length === 0" class="state-text">当前没有可展示的巡检记录。</p>
 
-        <section v-for="group in groupedReports" :key="group.dayLabel" class="timeline-group">
-          <p class="date eyebrow-text">{{ group.dayLabel }}</p>
-          <TimelineItemCard
-            v-for="item in group.items"
-            :key="item.id"
-            :item="item"
-            :to="`/timeline/${item.id}`"
-          />
-        </section>
+          <section v-for="group in groupedReports" :key="group.dayLabel" class="timeline-group">
+            <p class="date eyebrow-text">{{ group.dayLabel }}</p>
+            <TimelineItemCard
+                v-for="item in group.items"
+                :key="item.id"
+                :item="item"
+                :to="`/timeline/${item.id}`"
+            />
+          </section>
 
-        <p v-if="isLoadingMore" class="state-text">正在加载更多...</p>
-        <div v-else-if="reports.length > 0 && !hasMore">
-          <div class="divider divider-neutral  my-3 end-text">
-            已经到底了
+          <p v-if="isLoadingMore" class="state-text">正在加载更多...</p>
+          <div v-else-if="reports.length > 0 && !hasMore">
+            <div class="divider divider-neutral/100 end-text">
+              已经到底了
+            </div>
           </div>
         </div>
+
       </PullToRefresh>
 
       <BottomNav active="timeline" />

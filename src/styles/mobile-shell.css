@@ -201,6 +201,7 @@ input {
 .btn-soft-primary {
   border-color: color-mix(in oklab, var(--shell-primary-soft) 40%, var(--shell-primary));
   background: var(--shell-primary-soft);
+  border-radius: 10px;
   color: var(--shell-primary);
   font-size: 13px;
   font-weight: 600;

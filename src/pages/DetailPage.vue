@@ -20,7 +20,7 @@
         <RouterLink to="/timeline" class="empty-link btn-soft-primary">返回时间线</RouterLink>
       </section>
 
-      <PullToRefresh v-else-if="report" class="body-scroll detail-body" :on-refresh="refreshCurrentReport">
+      <div v-else-if="report" class="body-scroll detail-body">
         <section class="title-wrap">
           <h1 class="pest-name">{{ report.title }}</h1>
           <span class="severity-badge" :class="severityBadgeClass">严重程度：{{ severityLabel }}</span>
@@ -52,7 +52,7 @@
             </div>
           </article>
         </section>
-      </PullToRefresh>
+      </div>
 
       <section v-else class="detail-empty">
         <h1 class="pest-name">未找到虫害报告</h1>
@@ -69,7 +69,6 @@ import { ArrowLeft } from 'lucide-vue-next'
 import { useRoute, useRouter } from 'vue-router'
 
 import { reportsApi, toApiError, type ReportDetail } from '../api'
-import PullToRefresh from '../components/PullToRefresh.vue'
 import '../styles/mobile-shell.css'
 
 const route = useRoute()
@@ -122,9 +121,6 @@ const loadReport = async (id?: string) => {
   }
 }
 
-const refreshCurrentReport = async () => {
-  await loadReport(reportId.value)
-}
 
 watch(reportId, (id) => {
   void loadReport(id)

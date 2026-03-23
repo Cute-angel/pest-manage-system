@@ -6,65 +6,68 @@
         <Bell :size="18" class="icon-top" />
       </header>
 
-      <PullToRefresh class="body-scroll me-body" :on-refresh="loadPageData">
-        <article class="card profile-card">
-          <div class="avatar">
-            <User :size="18" />
-          </div>
-          <div class="profile-text">
-            <p class="name">{{ displayName }}</p>
-            <p class="meta">{{ displayMeta }}</p>
-          </div>
-          <ChevronRight :size="14" class="arrow" />
-        </article>
-
-        <p v-if="errorMessage" class="page-error">{{ errorMessage }}</p>
-<!--        //-->
-<!--        <section class="stat-row">-->
-<!--          <article class="card stat-card">-->
-<!--            <p class="value">{{ monthlyInspections }}</p>-->
-<!--            <p class="label">本月巡检</p>-->
-<!--          </article>-->
-<!--          <article class="card stat-card">-->
-<!--            <p class="value green">{{ completionRate }}%</p>-->
-<!--            <p class="label">任务完成率</p>-->
-<!--          </article>-->
-<!--        </section>-->
-
-        <section class="menu-section">
-          <h2>偏好设置</h2>
-          <article class="card menu-card">
-            <button class="menu-row" type="button"><span>消息提醒</span>
-              <ChevronRight :size="14" />
-            </button>
-            <div class="divider" />
-            <button class="menu-row" type="button"><span>显示与字体</span>
-              <ChevronRight :size="14" />
-            </button>
-            <div class="divider" />
-            <button class="menu-row" type="button"><span>数据同步</span>
-              <ChevronRight :size="14" />
-            </button>
+      <PullToRefresh class="body-scroll" :on-refresh="loadPageData">
+        <div class="me-body">
+          <article class="card profile-card">
+            <div class="avatar">
+              <User :size="18" />
+            </div>
+            <div class="profile-text">
+              <p class="name">{{ displayName }}</p>
+              <p class="meta">{{ displayMeta }}</p>
+            </div>
+            <ChevronRight :size="14" class="arrow" />
           </article>
-        </section>
 
-        <section class="menu-section">
-          <h2>支持</h2>
-          <article class="card menu-card">
-            <button class="menu-row" type="button"><span>帮助中心</span>
-              <ChevronRight :size="14" />
-            </button>
-            <div class="divider" />
-            <button class="menu-row" type="button"><span>关于应用</span>
-              <ChevronRight :size="14" />
-            </button>
-          </article>
-        </section>
+          <p v-if="errorMessage" class="page-error">{{ errorMessage }}</p>
+          <!--        //-->
+          <!--        <section class="stat-row">-->
+          <!--          <article class="card stat-card">-->
+          <!--            <p class="value">{{ monthlyInspections }}</p>-->
+          <!--            <p class="label">本月巡检</p>-->
+          <!--          </article>-->
+          <!--          <article class="card stat-card">-->
+          <!--            <p class="value green">{{ completionRate }}%</p>-->
+          <!--            <p class="label">任务完成率</p>-->
+          <!--          </article>-->
+          <!--        </section>-->
 
-        <button class="logout-btn btn-soft interactive-card" type="button" @click="handleLogout">
-          {{ isLoggingOut ? '退出中...' : '退出登录' }}
-        </button>
-        <div class="spacer" />
+          <section class="menu-section">
+            <h2>偏好设置</h2>
+            <article class="card menu-card">
+              <button class="menu-row" type="button"><span>消息提醒</span>
+                <ChevronRight :size="14" />
+              </button>
+              <div class="divider" />
+              <button class="menu-row" type="button"><span>显示与字体</span>
+                <ChevronRight :size="14" />
+              </button>
+              <div class="divider" />
+              <button class="menu-row" type="button"><span>数据同步</span>
+                <ChevronRight :size="14" />
+              </button>
+            </article>
+          </section>
+
+          <section class="menu-section">
+            <h2>支持</h2>
+            <article class="card menu-card">
+              <button class="menu-row" type="button"><span>帮助中心</span>
+                <ChevronRight :size="14" />
+              </button>
+              <div class="divider" />
+              <button class="menu-row" type="button"><span>关于应用</span>
+                <ChevronRight :size="14" />
+              </button>
+            </article>
+          </section>
+
+          <button class="logout-btn btn-soft interactive-card" type="button" @click="handleLogout">
+            {{ isLoggingOut ? '退出中...' : '退出登录' }}
+          </button>
+          <div class="spacer" />
+        </div>
+
       </PullToRefresh>
 
       <BottomNav active="me" />
