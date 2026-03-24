@@ -6,10 +6,11 @@
           <span class="field-text">{{ fieldName }}</span>
           <ChevronDown :size="14" class="icon-muted" />
         </div>
-        <div class="weather-wrap">
-          <CloudSun :size="16" class="icon-subtle" />
-          <span class="weather-text">{{ weatherText }}</span>
-        </div>
+<!--        <div class="weather-wrap">-->
+<!--          <CloudSun :size="16" class="icon-subtle" />-->
+<!--          <span class="weather-text">{{ weatherText }}</span>-->
+<!--        </div>-->
+        <WeatherStatus :size="16" class="icon-mute" />
       </header>
 
       <PullToRefresh class="body-scroll home-body" :on-refresh="loadSummary">
@@ -42,7 +43,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { ChevronDown, CloudSun } from 'lucide-vue-next'
+import { ChevronDown } from 'lucide-vue-next'
 
 import { dashboardApi, toApiError, type DashboardDeviceStatus, type DashboardSummary } from '../api'
 import BottomNav from '../components/BottomNav.vue'
@@ -51,6 +52,7 @@ import LatestSuggestion from '../components/LatestSuggestion.vue'
 import PestTrendCard from '../components/PestTrendCard.vue'
 import PullToRefresh from '../components/PullToRefresh.vue'
 import '../styles/mobile-shell.css'
+import WeatherStatus from "../components/weatherStatus.vue";
 
 type DeviceTone = 'dot-online' | 'dot-offline' | 'dot-maintenance'
 
@@ -71,7 +73,6 @@ const toneMap: Record<DashboardDeviceStatus['status'], DeviceTone> = {
 }
 
 const fieldName = computed(() => summary.value?.fieldName || '地块未配置')
-const weatherText = computed(() => summary.value?.weatherText || '天气数据待同步')
 const pestData = computed(() => summary.value?.pestTrend ?? [])
 const pestTrendChange = computed(() => summary.value?.pestTrendChange ?? 0)
 const deviceStatus = computed<DeviceStatusCardItem[]>(() => {
@@ -137,17 +138,7 @@ onMounted(() => {
   font-weight: 500;
 }
 
-.weather-wrap {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
 
-.weather-text {
-  color: var(--shell-text-body);
-  font-size: 12px;
-  font-weight: 500;
-}
 
 .home-body {
   padding: 20px 20px 12px;
