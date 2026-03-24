@@ -11,7 +11,7 @@
 - 当前端本地存在登录态时，会自动附带请求头：
 
 ```http
-Authorization: Bearer <token>
+Authorization: Bearer <accessToken>
 ```
 
 - 前端兼容以下成功响应格式：
@@ -45,7 +45,10 @@ Authorization: Bearer <token>
 - 出错时前端优先读取以下字段作为错误文案：
   - `message`
   - `error`
-- 接口返回 `401` 时，前端会清空本地登录态。
+- accessToken 过期时，后端应返回 `401` 或明确的过期业务码。
+- 前端捕获到过期后会调用 `POST /api/auth/refresh`，请求体仅携带 `refreshToken`。
+- refresh 成功后前端会替换本地 `accessToken` 和 `refreshToken`，并自动重试刚才失败的请求。
+- refresh 失败或接口继续返回 `401` 时，前端会清空本地登录态。
 
 ## 枚举值
 
@@ -98,7 +101,8 @@ Authorization: Bearer <token>
 
 ```json
 {
-  "token": "mock-token",
+  "accessToken": "mock-access-token",
+  "refreshToken": "mock-refresh-token",
   "user": {
     "id": "user-admin",
     "name": "李晨",
@@ -111,14 +115,48 @@ Authorization: Bearer <token>
 
 字段要求：
 
-- `token: string` 必填
+- `accessToken: string` 必填
+- `refreshToken: string` 必填
 - `user.id: string` 必填
 - `user.name: string` 必填
 - `user.phone: string` 必填
 - `user.role?: string`
 - `user.farmName?: string`
 
-### 2. 注册
+### 2. 刷新 token
+
+- 方法：`POST`
+- 路径：`/api/auth/refresh`
+- 鉴权：否
+
+请求体：
+
+```json
+{
+  "refreshToken": "mock-refresh-token"
+}
+```
+
+成功响应：
+
+```json
+{
+  "accessToken": "mock-access-token",
+  "refreshToken": "mock-refresh-token"
+}
+```
+
+字段要求：
+
+- `accessToken: string` 必填
+- `refreshToken: string` 必填
+
+说明：
+
+- refresh 成功后旧 `refreshToken` 立即失效，后端返回新的 token 对。
+- refresh 失败建议返回 `401`，并可附带 `code: "TOKEN_EXPIRED"`。
+
+### 3. 注册
 
 - 方法：`POST`
 - 路径：`/api/auth/register`
@@ -151,7 +189,7 @@ Authorization: Bearer <token>
 
 - 前端兼容 `200` 或 `201`。
 
-### 3. 退出登录
+### 4. 退出登录
 
 - 方法：`POST`
 - 路径：`/api/auth/logout`
@@ -164,7 +202,7 @@ Authorization: Bearer <token>
 - 前端不消费响应体字段。
 - 返回任意 `2xx` 都可以，常见为 `200` 或 `204`。
 
-### 4. 获取当前用户信息
+### 5. 获取当前用户信息
 
 - 方法：`GET`
 - 路径：`/api/users/me`
@@ -200,7 +238,7 @@ Authorization: Bearer <token>
 
 - `onlineDeviceCount` 当前仍保留在用户信息中，虽然“我的”页在线设备展示已主要复用 dashboard 数据。
 
-### 5. 获取首页 Dashboard 摘要
+### 6. 获取首页 Dashboard 摘要
 
 - 方法：`GET`
 - 路径：`/api/dashboard/summary`
@@ -245,7 +283,7 @@ Authorization: Bearer <token>
 - `pestTrendChange` 是必填数值，前端会自行拼接展示文案。
 - `deviceStatuses` 中前端会按 `status === "online"` 提取在线设备数。
 
-### 6. 获取最新推荐详情
+### 7. 获取最新推荐详情
 
 - 方法：`GET`
 - 路径：`/api/recommendations/latest`
@@ -275,7 +313,7 @@ Authorization: Bearer <token>
 - `action: string`
 - `timeline: string`
 
-### 7. 按 ID 获取推荐详情
+### 8. 按 ID 获取推荐详情
 
 - 方法：`GET`
 - 路径：`/api/recommendations/:id`
@@ -283,7 +321,7 @@ Authorization: Bearer <token>
 
 成功响应结构与 `/api/recommendations/latest` 一致。
 
-### 8. 获取报告列表
+### 9. 获取报告列表
 
 - 方法：`GET`
 - 路径：`/api/reports`
@@ -348,7 +386,7 @@ Authorization: Bearer <token>
 - `occurredAt` 建议返回 ISO 8601 时间字符串。
 - 前端优先支持分页结构；如果只返回数组，也能工作，但 `hasMore` 会退化为按 `limit` 推断。
 
-### 9. 获取报告详情
+### 10. 获取报告详情
 
 - 方法：`GET`
 - 路径：`/api/reports/:id`
@@ -383,7 +421,7 @@ Authorization: Bearer <token>
 - `recommendationText: string`
 - `recommendationNote: string`
 
-### 10. 上传图片并识别
+### 11. 上传图片并识别
 
 - 方法：`POST`
 - 路径：`/api/detections`
@@ -431,7 +469,7 @@ Authorization: Bearer <token>
 - 当 `kind = "clean"` 时，`pestCounts` 也必须返回数组，允许为空数组 `[]`。
 - `annotatedImageUrl` 允许为空字符串，前端会回退展示原图。
 
-### 11. 保存识别记录
+### 12. 保存识别记录
 
 - 方法：`POST`
 - 路径：`/api/detection-records`
@@ -473,4 +511,6 @@ Authorization: Bearer <token>
 - `/api/detections` 必须支持 `multipart/form-data` 文件上传。
 - `/api/detections` 当前按产品交互应允许未登录访问。
 - `/api/detection-records` 当前请求体只需要 `detectionId`。
-- 所有需要登录的接口在 token 无效时应返回 `401`。
+- 所有需要登录的接口在 `accessToken` 无效时应返回 `401`。
+- `/api/auth/login` 应返回 `accessToken` 和 `refreshToken`，不要再返回旧的 `token` 单字段。
+- `/api/auth/refresh` 应校验 `refreshToken`，成功后返回新的 `accessToken` 和 `refreshToken`，并使旧 `refreshToken` 失效。

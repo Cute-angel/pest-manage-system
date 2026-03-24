@@ -1,6 +1,6 @@
-import axios, { AxiosError } from 'axios'
+import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios'
 
-import { clearAuthSession, getAccessToken } from './auth-storage'
+import { clearAuthSession, getAccessToken, getRefreshToken, setAuthenticatedSession } from './auth-storage'
 
 export interface ApiError {
   message: string
@@ -17,7 +17,21 @@ type ItemsEnvelope<T> = {
   items: T[]
 }
 
+type RefreshResponse = {
+  accessToken: string
+  refreshToken: string
+}
+
+type RefreshResponseEnvelope = RefreshResponse | DataEnvelope<RefreshResponse>
+
+type RetryableRequestConfig = InternalAxiosRequestConfig & {
+  _retry?: boolean
+  skipAuthorization?: boolean
+  skipAuthRefresh?: boolean
+}
+
 const DEFAULT_API_BASE_URL = 'http://localhost:8000'
+const AUTH_EXPIRED_CODES = new Set(['TOKEN_EXPIRED', 'ACCESS_TOKEN_EXPIRED', 'AUTH_TOKEN_EXPIRED'])
 
 export const apiBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim() || DEFAULT_API_BASE_URL
 
@@ -29,19 +43,54 @@ export const http = axios.create({
   },
 })
 
+const refreshHttp = axios.create({
+  baseURL: apiBaseUrl,
+  timeout: 15000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+})
+
+let refreshRequest: Promise<string> | null = null
+
 http.interceptors.request.use((config) => {
+  const requestConfig = config as RetryableRequestConfig
   const token = getAccessToken()
 
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
+  if (requestConfig.skipAuthorization) {
+    delete requestConfig.headers.Authorization
+  } else if (token) {
+    requestConfig.headers.Authorization = `Bearer ${token}`
+  } else if (requestConfig.headers.Authorization) {
+    delete requestConfig.headers.Authorization
   }
 
-  return config
+  return requestConfig
 })
 
 http.interceptors.response.use(
   (response) => response,
-  (error: AxiosError) => {
+  async (error: AxiosError) => {
+    const originalRequest = error.config as RetryableRequestConfig | undefined
+
+    if (shouldRefresh(error, originalRequest)) {
+      try {
+        const nextAccessToken = await refreshAccessToken()
+
+        if (!originalRequest) {
+          throw error
+        }
+
+        originalRequest._retry = true
+        originalRequest.headers.Authorization = `Bearer ${nextAccessToken}`
+
+        return http(originalRequest)
+      } catch (refreshError) {
+        clearSessionAndRedirectToLogin()
+        return Promise.reject(toApiError(refreshError))
+      }
+    }
+
     const apiError = toApiError(error)
 
     if (apiError.status === 401) {
@@ -51,6 +100,75 @@ http.interceptors.response.use(
     return Promise.reject(apiError)
   },
 )
+
+const refreshAccessToken = async () => {
+  if (!refreshRequest) {
+    refreshRequest = (async () => {
+      const refreshToken = getRefreshToken()
+
+      if (!refreshToken) {
+        throw new Error('缺少 refreshToken')
+      }
+
+      const response = await refreshHttp.post<RefreshResponseEnvelope>(
+        '/api/auth/refresh',
+        { refreshToken },
+        {
+          headers: {
+            Authorization: undefined,
+          },
+        },
+      )
+      const tokens = extractData(response.data)
+
+      if (!tokens.accessToken || !tokens.refreshToken) {
+        throw new Error('refresh 响应缺少 token')
+      }
+
+      setAuthenticatedSession(tokens)
+      return tokens.accessToken
+    })().finally(() => {
+      refreshRequest = null
+    })
+  }
+
+  return refreshRequest
+}
+
+const shouldRefresh = (error: AxiosError, originalRequest?: RetryableRequestConfig) => {
+  if (!originalRequest || originalRequest._retry || originalRequest.skipAuthRefresh) {
+    return false
+  }
+
+  const requestUrl = originalRequest.url ?? ''
+
+  if (requestUrl.endsWith('/api/auth/login') || requestUrl.endsWith('/api/auth/register') || requestUrl.endsWith('/api/auth/refresh')) {
+    return false
+  }
+
+  const responseStatus = error.response?.status
+  const responseCode = pickString((error.response?.data as Record<string, unknown> | undefined)?.code)
+
+  return responseStatus === 401 || AUTH_EXPIRED_CODES.has(responseCode)
+}
+
+const clearSessionAndRedirectToLogin = () => {
+  clearAuthSession()
+
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  const loginPath = '/login'
+  const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`
+
+  if (window.location.pathname === loginPath) {
+    return
+  }
+
+  const nextUrl = `${loginPath}?redirect=${encodeURIComponent(currentPath)}`
+  window.location.replace(nextUrl)
+}
 
 export const toApiError = (error: unknown): ApiError => {
   if (isApiError(error)) {
@@ -68,7 +186,7 @@ export const toApiError = (error: unknown): ApiError => {
     return {
       message,
       status: error.response?.status,
-      code: error.code,
+      code: pickString(responseData?.code) || error.code,
       details: responseData,
     }
   }

@@ -1,4 +1,6 @@
-import { clearAuthSession, setAuthenticatedSession } from './auth-storage'
+import type { AxiosRequestConfig } from 'axios'
+
+import { clearAuthSession, getRefreshToken, setAuthenticatedSession } from './auth-storage'
 import { sha256Hex } from './crypto'
 import { extractData, http } from './http'
 
@@ -21,13 +23,24 @@ export interface RegisterPayload {
 }
 
 export interface LoginResponse {
-  token: string
+  accessToken: string
+  refreshToken: string
   user: AuthUser
 }
 
 export interface RegisterResponse {
   userId?: string
   message?: string
+}
+
+export interface RefreshTokenResponse {
+  accessToken: string
+  refreshToken: string
+}
+
+type AuthRequestConfig = AxiosRequestConfig & {
+  skipAuthorization?: boolean
+  skipAuthRefresh?: boolean
 }
 
 export const authApi = {
@@ -38,7 +51,10 @@ export const authApi = {
     })
     const result = extractData(response.data)
 
-    setAuthenticatedSession(result.token)
+    setAuthenticatedSession({
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+    })
     return result
   },
 
@@ -56,5 +72,22 @@ export const authApi = {
     } finally {
       clearAuthSession()
     }
+  },
+
+  async refresh(refreshToken = getRefreshToken()) {
+    if (!refreshToken) {
+      throw new Error('缺少 refreshToken')
+    }
+
+    const response = await http.post<RefreshTokenResponse | { data: RefreshTokenResponse }>(
+      '/api/auth/refresh',
+      { refreshToken },
+      {
+        skipAuthorization: true,
+        skipAuthRefresh: true,
+      } as AuthRequestConfig,
+    )
+
+    return extractData(response.data)
   },
 }

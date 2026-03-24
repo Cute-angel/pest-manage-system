@@ -2,7 +2,7 @@
 
 这个目录提供一个零依赖的 Python 测试后端，默认监听 `http://localhost:8000`，与当前前端 `src/api/http.ts` 的默认地址一致。
 
-认证接口不再接收明文密码，前端会先做一次 SHA-256，再通过 `passwordHash` 字段提交。
+认证接口不再接收明文密码，前端会先做一次 SHA-256，再通过 `passwordHash` 字段提交。登录后前端只会携带 `accessToken`，过期时再用 `refreshToken` 调用 `/api/auth/refresh` 获取新 token。
 
 ## Run
 
@@ -20,6 +20,7 @@ python src-backend/server.py
 ## Implemented Endpoints
 
 - `POST /api/auth/login`
+- `POST /api/auth/refresh`
 - `POST /api/auth/register`
 - `POST /api/auth/logout`
 - `GET /api/users/me`
