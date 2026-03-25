@@ -41,8 +41,8 @@ input {
 
 .phone-shell {
   
-  width: 390px;
-  height: 844px;
+  width: 100vw;
+  height: 99vh;
   
   border-radius: 20px;
   background: var(--shell-bg);

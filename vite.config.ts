@@ -3,6 +3,8 @@ import vue from "@vitejs/plugin-vue";
 import tailwindcss from "@tailwindcss/vite";
 import vueDevTools from 'vite-plugin-vue-devtools'
 
+import { cloudflare } from "@cloudflare/vite-plugin";
+
 // @ts-expect-error process is a nodejs global
 const host = process.env.TAURI_DEV_HOST;
 
@@ -12,7 +14,7 @@ export default defineConfig(async ({ mode }) => {
   // const proxyTarget = env.VITE_API_PROXY_TARGET?.trim() || 'http://127.0.0.1:8000'
 
   return {
-  plugins: [vue(), tailwindcss()],
+  plugins: [vue(), tailwindcss(), cloudflare()],
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //
@@ -36,4 +38,4 @@ export default defineConfig(async ({ mode }) => {
     },
 
   },
-}});
+};});
