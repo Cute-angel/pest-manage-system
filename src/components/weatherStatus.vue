@@ -29,6 +29,14 @@ interface WeatherNowResponse {
   now?: WeatherNowData
 }
 
+interface CachedWeatherPayload {
+  expiresAt: number
+  weather: WeatherNowData
+}
+
+const WEATHER_CACHE_TTL = 60 * 60 * 1000
+const WEATHER_CACHE_PREFIX = 'manage-system-weather-now:'
+
 const props = withDefaults(
   defineProps<{
     size?: number
@@ -84,6 +92,54 @@ const weatherHttp = axios.create({
   },
 })
 
+const getCacheKey = () => {
+  return [
+    WEATHER_CACHE_PREFIX,
+    resolvedLocation.value,
+    props.lang,
+    props.unit,
+  ].join(':')
+}
+
+const readWeatherCache = () => {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  const rawValue = window.localStorage.getItem(getCacheKey())
+
+  if (!rawValue) {
+    return null
+  }
+
+  try {
+    const parsed = JSON.parse(rawValue) as CachedWeatherPayload
+
+    if (!parsed.expiresAt || parsed.expiresAt <= Date.now() || !parsed.weather) {
+      window.localStorage.removeItem(getCacheKey())
+      return null
+    }
+
+    return parsed.weather
+  } catch {
+    window.localStorage.removeItem(getCacheKey())
+    return null
+  }
+}
+
+const writeWeatherCache = (value: WeatherNowData) => {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  const payload: CachedWeatherPayload = {
+    expiresAt: Date.now() + WEATHER_CACHE_TTL,
+    weather: value,
+  }
+
+  window.localStorage.setItem(getCacheKey(), JSON.stringify(payload))
+}
+
 const loadWeather = async () => {
   if (!resolvedLocation.value || !hasAuthConfig.value) {
     weather.value = null
@@ -95,6 +151,13 @@ const loadWeather = async () => {
   errorMessage.value = ''
 
   try {
+    const cachedWeather = readWeatherCache()
+
+    if (cachedWeather) {
+      weather.value = cachedWeather
+      return
+    }
+
     const headers: Record<string, string> = {}
 
     if (resolvedJwtToken.value) {
@@ -117,6 +180,7 @@ const loadWeather = async () => {
     }
 
     weather.value = response.data.now
+    writeWeatherCache(response.data.now)
   } catch (error) {
     weather.value = null
     errorMessage.value = error instanceof Error ? error.message : '天气获取失败'
