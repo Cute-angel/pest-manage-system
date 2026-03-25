@@ -8,7 +8,7 @@
 
       <PullToRefresh class="body-scroll" :on-refresh="loadPageData">
         <div class="me-body">
-          <article class="card profile-card">
+          <button class="card profile-card interactive-card" type="button" @click="isAccountSettingsOpen = true">
             <div class="avatar">
               <User :size="18" />
             </div>
@@ -17,7 +17,7 @@
               <p class="meta">{{ displayMeta }}</p>
             </div>
             <ChevronRight :size="14" class="arrow" />
-          </article>
+          </button>
 
           <p v-if="errorMessage" class="page-error">{{ errorMessage }}</p>
           <!--        //-->
@@ -73,6 +73,12 @@
       <BottomNav active="me" />
     </section>
   </main>
+
+  <AccountSettingsSheet
+    v-model="isAccountSettingsOpen"
+    :profile="profile"
+    @profile-updated="handleProfileUpdated"
+  />
 </template>
 
 <script setup lang="ts">
@@ -81,6 +87,7 @@ import { Bell, ChevronRight, User } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 
 import { authApi, dashboardApi, toApiError, userApi, type DashboardSummary, type UserProfile } from '../api'
+import AccountSettingsSheet from '../components/AccountSettingsSheet.vue'
 import BottomNav from '../components/BottomNav.vue'
 import PullToRefresh from '../components/PullToRefresh.vue'
 import '../styles/mobile-shell.css'
@@ -91,6 +98,7 @@ const profile = ref<UserProfile | null>(null)
 const summary = ref<DashboardSummary | null>(null)
 const errorMessage = ref('')
 const isLoggingOut = ref(false)
+const isAccountSettingsOpen = ref(false)
 
 const displayName = computed(() => {
   if (!profile.value) {
@@ -148,6 +156,10 @@ const handleLogout = async () => {
   }
 }
 
+const handleProfileUpdated = (nextProfile: UserProfile) => {
+  profile.value = nextProfile
+}
+
 onMounted(() => {
   void loadPageData()
 })
@@ -180,10 +192,13 @@ onMounted(() => {
 }
 
 .profile-card {
+  border: 1px solid var(--shell-line);
   flex-direction: row;
   align-items: center;
   gap: 12px;
   padding: 14px;
+  text-align: left;
+  cursor: pointer;
 }
 
 .avatar {
