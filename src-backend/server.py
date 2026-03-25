@@ -294,26 +294,80 @@ REPORTS: list[dict[str, Any]] = [
 
 
 USERS_BY_PHONE: dict[str, dict[str, Any]] = {DEFAULT_USER["phone"]: deepcopy(DEFAULT_USER)}
-TOKENS_TO_PHONE: dict[str, str] = {}
+ACCESS_TOKENS_TO_PHONE: dict[str, str] = {}
+REFRESH_TOKENS_TO_PHONE: dict[str, str] = {}
+PHONE_TO_REFRESH_TOKENS: dict[str, set[str]] = {}
 DETECTION_RECORDS: list[dict[str, Any]] = []
 
 
-def create_token(phone: str) -> str:
-    token = f"mock-token-{phone}-{uuid.uuid4().hex[:8]}"
-    TOKENS_TO_PHONE[token] = phone
+def issue_access_token(phone: str) -> str:
+    token = f"mock-access-{phone}-{uuid.uuid4().hex[:8]}"
+    ACCESS_TOKENS_TO_PHONE[token] = phone
     return token
+
+
+def issue_refresh_token(phone: str) -> str:
+    token = f"mock-refresh-{phone}-{uuid.uuid4().hex[:8]}"
+    REFRESH_TOKENS_TO_PHONE[token] = phone
+    PHONE_TO_REFRESH_TOKENS.setdefault(phone, set()).add(token)
+    return token
+
+
+def issue_token_pair(phone: str) -> dict[str, str]:
+    return {
+        "accessToken": issue_access_token(phone),
+        "refreshToken": issue_refresh_token(phone),
+    }
+
+
+def revoke_refresh_token(refresh_token: str | None) -> None:
+    if not refresh_token:
+        return
+
+    phone = REFRESH_TOKENS_TO_PHONE.pop(refresh_token, None)
+    if not phone:
+        return
+
+    refresh_tokens = PHONE_TO_REFRESH_TOKENS.get(phone)
+    if not refresh_tokens:
+        return
+
+    refresh_tokens.discard(refresh_token)
+    if not refresh_tokens:
+        PHONE_TO_REFRESH_TOKENS.pop(phone, None)
+
+
+def revoke_access_token(access_token: str | None) -> None:
+    if access_token:
+        ACCESS_TOKENS_TO_PHONE.pop(access_token, None)
+
+
+def revoke_all_tokens_for_phone(phone: str) -> None:
+    for token, token_phone in list(ACCESS_TOKENS_TO_PHONE.items()):
+        if token_phone == phone:
+            ACCESS_TOKENS_TO_PHONE.pop(token, None)
+
+    for refresh_token in list(PHONE_TO_REFRESH_TOKENS.get(phone, set())):
+        revoke_refresh_token(refresh_token)
 
 
 def get_user_from_token(token: str | None) -> dict[str, Any] | None:
     if not token:
         return None
 
-    phone = TOKENS_TO_PHONE.get(token)
+    phone = ACCESS_TOKENS_TO_PHONE.get(token)
     if not phone:
         return None
 
     user = USERS_BY_PHONE.get(phone)
     return deepcopy(user) if user else None
+
+
+def get_phone_from_token(token: str | None) -> str | None:
+    if not token:
+        return None
+
+    return ACCESS_TOKENS_TO_PHONE.get(token)
 
 
 def parse_bearer_token(header: str | None) -> str | None:
@@ -502,14 +556,35 @@ class MockApiHandler(BaseHTTPRequestHandler):
                 self._json_response(HTTPStatus.UNAUTHORIZED, {"message": "手机号或密码错误"})
                 return
 
-            token = create_token(phone)
+            revoke_all_tokens_for_phone(phone)
+            tokens = issue_token_pair(phone)
             self._json_response(
                 HTTPStatus.OK,
                 {
-                    "token": token,
+                    **tokens,
                     "user": sanitize_user(user),
                 },
             )
+            return
+
+        if parsed.path == "/api/auth/refresh":
+            payload = self._read_json_body()
+            refresh_token = str(payload.get("refreshToken", "")).strip()
+            phone = REFRESH_TOKENS_TO_PHONE.get(refresh_token)
+
+            if not phone:
+                self._json_response(HTTPStatus.UNAUTHORIZED, {"message": "refreshToken 已失效", "code": "TOKEN_EXPIRED"})
+                return
+
+            user = USERS_BY_PHONE.get(phone)
+            if not user:
+                revoke_refresh_token(refresh_token)
+                self._json_response(HTTPStatus.UNAUTHORIZED, {"message": "refreshToken 已失效", "code": "TOKEN_EXPIRED"})
+                return
+
+            revoke_refresh_token(refresh_token)
+            tokens = issue_token_pair(phone)
+            self._json_response(HTTPStatus.OK, tokens)
             return
 
         if parsed.path == "/api/auth/register":
@@ -545,9 +620,42 @@ class MockApiHandler(BaseHTTPRequestHandler):
             return
 
         if parsed.path == "/api/auth/logout":
+            access_token = parse_bearer_token(self.headers.get("Authorization"))
+            phone = ACCESS_TOKENS_TO_PHONE.get(access_token) if access_token else None
+
+            revoke_access_token(access_token)
+            if phone:
+                for refresh_token in list(PHONE_TO_REFRESH_TOKENS.get(phone, set())):
+                    revoke_refresh_token(refresh_token)
+
+            self._json_response(HTTPStatus.OK, {"success": True})
+            return
+
+        if parsed.path == "/api/users/change-password":
             token = parse_bearer_token(self.headers.get("Authorization"))
-            if token:
-                TOKENS_TO_PHONE.pop(token, None)
+            phone = get_phone_from_token(token)
+            user = USERS_BY_PHONE.get(phone) if phone else None
+            if not user:
+                self._json_response(HTTPStatus.UNAUTHORIZED, {"message": "未登录或登录已失效"})
+                return
+
+            payload = self._read_json_body()
+            current_password_hash = str(payload.get("currentPasswordHash", "")).strip().lower()
+            new_password_hash = str(payload.get("newPasswordHash", "")).strip().lower()
+
+            if not re.fullmatch(r"[0-9a-f]{64}", current_password_hash) or not re.fullmatch(r"[0-9a-f]{64}", new_password_hash):
+                self._json_response(HTTPStatus.BAD_REQUEST, {"message": "密码摘要格式不正确"})
+                return
+
+            if user["passwordHash"] != current_password_hash:
+                self._json_response(HTTPStatus.UNAUTHORIZED, {"message": "旧密码不正确"})
+                return
+
+            if current_password_hash == new_password_hash:
+                self._json_response(HTTPStatus.BAD_REQUEST, {"message": "新密码不能与旧密码相同"})
+                return
+
+            user["passwordHash"] = new_password_hash
             self._json_response(HTTPStatus.OK, {"success": True})
             return
 
@@ -575,13 +683,41 @@ class MockApiHandler(BaseHTTPRequestHandler):
 
         self._json_response(HTTPStatus.NOT_FOUND, {"message": "not found"})
 
+    def do_PATCH(self) -> None:
+        parsed = urlparse(self.path)
+
+        if parsed.path == "/api/users/me":
+            token = parse_bearer_token(self.headers.get("Authorization"))
+            phone = get_phone_from_token(token)
+            user = USERS_BY_PHONE.get(phone) if phone else None
+            if not user:
+                self._json_response(HTTPStatus.UNAUTHORIZED, {"message": "未登录或登录已失效"})
+                return
+
+            payload = self._read_json_body()
+            name = str(payload.get("name", "")).strip()
+
+            if not name:
+                self._json_response(HTTPStatus.BAD_REQUEST, {"message": "姓名不能为空"})
+                return
+
+            if len(name) > 20:
+                self._json_response(HTTPStatus.BAD_REQUEST, {"message": "姓名不能超过 20 个字符"})
+                return
+
+            user["name"] = name
+            self._json_response(HTTPStatus.OK, sanitize_user(user))
+            return
+
+        self._json_response(HTTPStatus.NOT_FOUND, {"message": "not found"})
+
     def log_message(self, format: str, *args: Any) -> None:
         return
 
     def _send_cors_headers(self) -> None:
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, PATCH, OPTIONS")
 
     def _json_response(self, status: HTTPStatus, payload: dict[str, Any]) -> None:
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
@@ -639,3 +775,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
