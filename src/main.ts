@@ -11,6 +11,8 @@ import MePage from "./pages/MePage.vue";
 import TimelinePage from "./pages/TimelinePage.vue";
 import { createPinia } from "pinia";
 import { isAuthenticatedSession } from "./api";
+import VueViewer from "v-viewer";
+import 'viewerjs/dist/viewer.css'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -53,4 +55,8 @@ router.beforeEach((to) => {
   return true;
 });
 
-createApp(App).use(router).use(createPinia()).mount("#app");
+createApp(App)
+    .use(router)
+    .use(createPinia())
+    .use(VueViewer)
+    .mount("#app");

@@ -28,8 +28,8 @@
             @change="handleFileChange"
           >
 
-          <button class="preview-shell" type="button" @click="openPicker">
-            <img v-if="displayPreviewUrl" class="preview-image" :src="displayPreviewUrl" :alt="selectedFileName" />
+          <button class="preview-shell" type="button" @click="openPicker" v-viewer="{movable:false}" ref="viewer">
+            <img v-if="displayPreviewUrl" class="preview-image" :src="displayPreviewUrl" :alt="selectedFileName"/>
             <div v-else class="preview-placeholder">
               <Search :size="22" class="icon-subtle" />
               <p class="placeholder-title">点击上传待检测图片</p>
@@ -128,7 +128,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { Search } from 'lucide-vue-next'
-
+import 'viewerjs/dist/viewer.css'
 import { detectionsApi, isAuthenticatedSession, toApiError, type DetectionResult } from '../api'
 import BottomNav from '../components/BottomNav.vue'
 import '../styles/mobile-shell.css'
@@ -143,6 +143,14 @@ const analysisError = ref('')
 const recordMessage = ref('')
 const isSubmittingRecord = ref(false)
 const recordStatus = ref<'idle' | 'uploaded' | 'skipped'>('idle')
+type ViewerHostElement = HTMLElement & {
+  $viewer: {
+    show: () => void
+  }
+}
+
+const viewer = ref<ViewerHostElement | null>(null)
+
 
 const totalDetectedCount = computed(() => {
   if (!analysis.value) {
@@ -157,6 +165,10 @@ const annotatedImageUrl = computed(() => analysis.value?.annotatedImageUrl || pr
 const displayPreviewUrl = computed(() => annotatedImageUrl.value || previewUrl.value)
 
 function openPicker() {
+  if (previewUrl.value) {
+    viewer.value!.$viewer.show()
+    return
+  }
   fileInput.value?.click()
 }
 

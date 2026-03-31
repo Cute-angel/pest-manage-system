@@ -25,9 +25,9 @@
           <h1 class="pest-name">{{ report.title }}</h1>
           <span class="severity-badge" :class="severityBadgeClass">严重程度：{{ severityLabel }}</span>
         </section>
-
-        <img class="hero-image" :src="report.imageUrl" :alt="report.title" />
-
+        <div class="images" v-viewer="{movable: false}">
+          <img class="hero-image" :src="report.imageUrl" :alt="report.title" />
+        </div>
         <article class="card meta-card">
           <div class="meta-row">
             <span class="meta-label">发现设备</span>
@@ -67,6 +67,7 @@
 import { computed, ref, watch } from 'vue'
 import { ArrowLeft } from 'lucide-vue-next'
 import { useRoute, useRouter } from 'vue-router'
+import 'viewerjs/dist/viewer.css'
 
 import { reportsApi, toApiError, type ReportDetail } from '../api'
 import '../styles/mobile-shell.css'
