@@ -1,5 +1,6 @@
 import { createApp } from "vue";
 import { createRouter, createWebHistory } from "vue-router";
+import { VueShowdownPlugin } from 'vue-showdown';
 import App from "./App.vue";
 import "./styles/tailwind.css";
 import HomePage from "./pages/HomePage.vue";
@@ -59,4 +60,5 @@ createApp(App)
     .use(router)
     .use(createPinia())
     .use(VueViewer)
+    .use(VueShowdownPlugin)
     .mount("#app");

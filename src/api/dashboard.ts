@@ -4,7 +4,12 @@ export type DeviceStatusKind = 'online' | 'offline' | 'maintenance'
 
 export interface DashboardTrendPoint {
   label: string
-  value: number
+  values: PendData[]
+}
+
+export interface PendData{
+  kind:string,
+  value:number,
 }
 
 export interface DashboardRecommendationPreview {
@@ -22,7 +27,7 @@ export interface DashboardDeviceStatus {
 
 export interface DashboardSummary {
   fieldName: string
-  weatherText: string
+  weatherText?: string
   recommendation: DashboardRecommendationPreview | null
   pestTrend: DashboardTrendPoint[]
   pestTrendChange: number
@@ -34,4 +39,9 @@ export const dashboardApi = {
     const response = await http.get<DashboardSummary | { data: DashboardSummary }>('/api/dashboard/summary')
     return extractData(response.data)
   },
+
+  async getPlotSummary(id:string) {
+    const response = await http.get<DashboardSummary| {data:DashboardSummary}>(`/api/dashboard/plot/${id}`)
+    return extractData(response.data)
+  }
 }

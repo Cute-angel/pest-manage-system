@@ -423,7 +423,7 @@ def dashboard_summary() -> dict[str, Any]:
 
 
 def detection_result_for_filename(filename: str) -> dict[str, Any]:
-    time.sleep(10)
+    #time.sleep(10)
     lower = filename.lower()
     detection_id = f"det-{uuid.uuid4().hex[:10]}"
 

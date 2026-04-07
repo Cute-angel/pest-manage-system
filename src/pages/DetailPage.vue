@@ -43,9 +43,14 @@
         <section class="block">
           <h2 class="block-title">处置建议</h2>
           <article class="card info-card">
-            <p class="body-text">{{ report.recommendationText }}</p>
+
+            <p class="body-text">
+              <VueShowdown :markdown="report.recommendationText"/>
+            </p>
             <div class="divider" />
-            <p class="body-note">{{ report.recommendationNote }}</p>
+            <p class="body-note">
+              <VueShowdown :markdown="report.recommendationNote"/>
+            </p>
             <div class="button-row">
               <button class="light-btn btn-soft-primary" type="button">确认执行</button>
               <button class="light-btn btn-soft" type="button">稍后处理</button>
@@ -71,6 +76,7 @@ import 'viewerjs/dist/viewer.css'
 
 import { reportsApi, toApiError, type ReportDetail } from '../api'
 import '../styles/mobile-shell.css'
+import {VueShowdown} from "vue-showdown";
 
 const route = useRoute()
 const router = useRouter()
