@@ -11,7 +11,7 @@
             <button
               class="browser-sheet-icon-btn browser-sheet-icon-btn-muted"
               type="button"
-              aria-label="close"
+              aria-label="关闭"
               @click="emit('update:modelValue', false)"
             >
               <X :size="18" />
@@ -30,7 +30,7 @@
             <button
               class="browser-sheet-icon-btn browser-sheet-icon-btn-muted"
               type="button"
-              aria-label="menu"
+              aria-label="菜单"
               @click="emit('menu')"
             >
               <Ellipsis :size="18" />
@@ -43,7 +43,7 @@
                 v-if="src"
                 :src="src"
                 class="browser-sheet-frame"
-                title="browser-sheet-content"
+                title="网页内容预览"
               />
               <div v-else class="browser-sheet-placeholder">
                 <p class="browser-sheet-placeholder-title">{{ title }}</p>
@@ -56,7 +56,7 @@
             <button
               class="browser-sheet-icon-btn browser-sheet-icon-btn-soft"
               type="button"
-              aria-label="back"
+              aria-label="返回"
               @click="emit('back')"
             >
               <ChevronLeft :size="18" />
@@ -66,7 +66,7 @@
               <button
                 class="browser-sheet-icon-btn browser-sheet-icon-btn-soft"
                 type="button"
-                aria-label="share"
+                aria-label="分享"
                 @click="emit('share')"
               >
                 <Share :size="18" />
@@ -75,7 +75,7 @@
               <button
                 class="browser-sheet-icon-btn browser-sheet-icon-btn-soft"
                 type="button"
-                aria-label="close"
+                aria-label="关闭"
                 @click="emit('update:modelValue', false)"
               >
                 <X :size="18" />
@@ -101,7 +101,7 @@ const props = withDefaults(
     lockScroll?: boolean
   }>(),
   {
-    title: 'myanimelist.net',
+    title: '网页预览',
     src: '',
     progress: 26,
     lockScroll: true,

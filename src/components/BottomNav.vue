@@ -1,5 +1,5 @@
 <template>
-  <nav class="bottom-nav" aria-label="Bottom navigation">
+  <nav class="bottom-nav" aria-label="底部导航">
     <RouterLink to="/home" class="tab" :class="{ active: active === 'home' }">
       <House :size="17" />
       <span>首页</span>

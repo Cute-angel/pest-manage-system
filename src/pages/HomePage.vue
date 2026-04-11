@@ -113,6 +113,30 @@ const toneMap: Record<DashboardDeviceStatus['status'], DeviceTone> = {
   maintenance: 'dot-maintenance',
 }
 
+const deviceLabelMap: Record<DashboardDeviceStatus['status'], string> = {
+  online: '在线',
+  offline: '离线',
+  maintenance: '维护中',
+}
+
+const translateDeviceLabel = (label: string, status: DashboardDeviceStatus['status']) => {
+  const normalizedLabel = label.trim().toLowerCase()
+
+  if (normalizedLabel === 'online') {
+    return '在线'
+  }
+
+  if (normalizedLabel === 'offline') {
+    return '离线'
+  }
+
+  if (normalizedLabel === 'maintenance') {
+    return '维护中'
+  }
+
+  return label.trim() || deviceLabelMap[status]
+}
+
 const isGlobalView = computed(() => selectedPlotId.value === null)
 const selectedPlot = computed(() => {
   return plots.value.find((plot) => plot.id === selectedPlotId.value) ?? null
@@ -128,7 +152,7 @@ const pestData = computed(() => summary.value?.pestTrend ?? [])
 const pestTrendChange = computed(() => summary.value?.pestTrendChange ?? 0)
 const deviceStatus = computed<DeviceStatusCardItem[]>(() => {
   return (summary.value?.deviceStatuses ?? []).map((item) => ({
-    label: item.label,
+    label: translateDeviceLabel(item.label, item.status),
     count: item.count,
     tone: toneMap[item.status],
   }))

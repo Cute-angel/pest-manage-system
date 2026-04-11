@@ -16,7 +16,7 @@
           <div class="row-between upload-head">
             <div>
               <p class="section-title">图片上传</p>
-              <p class="eyebrow-text">支持 JPG / PNG，识别后预览区直接切换为框选结果</p>
+              <p class="eyebrow-text">支持常见图片格式，识别后预览区直接切换为框选结果</p>
             </div>
           </div>
 

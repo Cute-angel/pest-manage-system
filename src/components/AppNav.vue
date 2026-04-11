@@ -1,11 +1,11 @@
 <template>
   <header class="top-nav">
-    <RouterLink to="/home">Home</RouterLink>
-    <RouterLink to="/login">Login</RouterLink>
-    <RouterLink to="/detail">Detail</RouterLink>
-    <RouterLink to="/recommendation-detail">Recommendation</RouterLink>
-    <RouterLink to="/timeline">Timeline</RouterLink>
-    <RouterLink to="/me">Me</RouterLink>
+    <RouterLink to="/home">首页</RouterLink>
+    <RouterLink to="/login">登录</RouterLink>
+    <RouterLink to="/detail">详情</RouterLink>
+    <RouterLink to="/recommendation-detail">建议</RouterLink>
+    <RouterLink to="/timeline">时间线</RouterLink>
+    <RouterLink to="/me">我的</RouterLink>
   </header>
 </template>
 

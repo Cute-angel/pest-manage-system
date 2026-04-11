@@ -85,9 +85,9 @@ type PullToRefreshExposed = {
 
 const filters: Array<{ label: string; value: FilterValue }> = [
   { label: '全部', value: 'all' },
-  { label: 'monitoring', value: 'monitoring' },
-  { label: 'warning', value: 'warning' },
-  { label: 'treated', value: 'treated' },
+  { label: '监测中', value: 'monitoring' },
+  { label: '预警', value: 'warning' },
+  { label: '已处理', value: 'treated' },
 ]
 
 const reports = ref<ReportSummary[]>([])
@@ -126,9 +126,9 @@ const statusClassMap: Record<ReportStatus, 'status-neutral' | 'status-warm'> = {
 }
 
 const statusLabelMap: Record<ReportStatus, string> = {
-  monitoring: 'monitoring',
-  warning: 'warning',
-  treated: 'treated',
+  monitoring: '监测中',
+  warning: '预警',
+  treated: '已处理',
 }
 
 const timelineMetaText:ComputedRef<string> = computed(() => {

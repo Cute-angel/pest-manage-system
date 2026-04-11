@@ -11,7 +11,7 @@
             <button
               class="account-sheet-icon-btn account-sheet-icon-btn-soft"
               type="button"
-              :aria-label="currentView === 'menu' ? 'close' : 'back'"
+              :aria-label="currentView === 'menu' ? '关闭' : '返回'"
               @click="handleBack"
             >
               <ChevronLeft v-if="currentView !== 'menu'" :size="18" />
@@ -26,7 +26,7 @@
             <button
               class="account-sheet-icon-btn account-sheet-icon-btn-soft"
               type="button"
-              aria-label="close"
+              aria-label="关闭"
               @click="emit('update:modelValue', false)"
             >
               <X :size="18" />

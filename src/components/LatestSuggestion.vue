@@ -1,6 +1,6 @@
 <template>
   <section class="stack-10">
-    <h2 class="section-title">Today’s Recommendation</h2>
+    <h2 class="section-title">今日建议</h2>
     <article class="card card-14">
       <div class="row-between">
         <p class="card-heading">{{ headingText }}</p>

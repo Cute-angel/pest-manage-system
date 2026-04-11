@@ -6,7 +6,7 @@
           <div class="brand-icon-wrap">
             <Leaf :size="16" />
           </div>
-          <span class="brand-name">Pencil Agro</span>
+          <span class="brand-name">农场助手</span>
         </div>
         <span class="help-text">帮助</span>
       </header>

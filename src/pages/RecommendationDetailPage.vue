@@ -21,25 +21,25 @@
         <div class="divider" />
 
         <section class="section">
-          <h2>Situation Overview</h2>
+          <h2>情况概览</h2>
           <p>{{ recommendation.situation }}</p>
         </section>
         <div class="divider " />
 
         <section class="section">
-          <h2>Data Evidence</h2>
+          <h2>数据</h2>
           <p>{{ recommendation.evidence }}</p>
         </section>
         <div class="divider" />
 
         <section class="section">
-          <h2>Recommended Action</h2>
+          <h2>建议方案</h2>
           <p>{{ recommendation.action }}</p>
         </section>
         <div class="divider" />
 
         <section class="section">
-          <h2>Suggested Timeline</h2>
+          <h2>建议时机</h2>
           <p>{{ recommendation.timeline }}</p>
         </section>
       </template>
@@ -50,7 +50,7 @@
       </template>
 
       <div class="spacer" />
-      <button class="confirm-btn btn-soft-primary" type="button">Confirm / Schedule Action</button>
+      <button class="confirm-btn btn-soft-primary" type="button">确认 / 安排执行</button>
     </section>
   </main>
 </template>
