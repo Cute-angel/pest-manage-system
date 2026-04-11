@@ -10,6 +10,8 @@ import TimelinePage from "./pages/TimelinePage.vue";
 import { createPinia } from "pinia";
 import { isAuthenticatedSession } from "./api";
 import VueViewer from "v-viewer";
+import { initializeReminderNotifications } from "./services/reminderNotifications";
+import { useReminderStore } from "./stores/reminderStore";
 import 'viewerjs/dist/viewer.css'
 
 const router = createRouter({
@@ -25,6 +27,8 @@ const router = createRouter({
     { path: "/home", component:  HomePage, meta: { requiresAuth: true } },
     { path: "/detect", component: ()=>import('./pages/DetectPage.vue') },
     { path: "/login", component: LoginPage },
+    { path: "/notification-settings", component: ()=> import('./pages/NotificationSettingsPage.vue'), meta: { requiresAuth: true } },
+    { path: "/task-reminders", component:()=>import('./pages/TaskReminderPage.vue'), meta: { requiresAuth: true } },
     { path: "/recommendation-detail", component: ()=>import('./pages/RecommendationDetailPage.vue') },
     { path: "/me", component: ()=>import('./pages/MePage.vue'), meta: { requiresAuth: true } },
     {
@@ -70,9 +74,14 @@ router.afterEach((to, from) => {
   to.meta.transition = toDepth < fromDepth ? "route-slide-right" : "route-slide-left";
 });
 
+const pinia = createPinia();
 createApp(App)
     .use(router)
-    .use(createPinia())
+    .use(pinia)
     .use(VueViewer)
     .use(VueShowdownPlugin)
     .mount("#app");
+
+const reminderStore = useReminderStore(pinia);
+void reminderStore.syncReminderNotifications();
+void initializeReminderNotifications(router);

@@ -51,9 +51,12 @@
             <p class="body-note">
               <VueShowdown :markdown="report.recommendationNote"/>
             </p>
+            <p v-if="actionFeedback" class="action-feedback">{{ actionFeedback }}</p>
             <div class="button-row">
               <button class="light-btn btn-soft-primary" type="button">确认执行</button>
-              <button class="light-btn btn-soft" type="button">稍后处理</button>
+              <button class="light-btn btn-soft" type="button" :disabled="isScheduling || !report" @click="handleScheduleLater">
+                {{ isScheduling ? '加入中...' : '稍后处理' }}
+              </button>
             </div>
           </article>
         </section>
@@ -77,13 +80,17 @@ import 'viewerjs/dist/viewer.css'
 import { reportsApi, toApiError, type ReportDetail } from '../api'
 import '../styles/mobile-shell.css'
 import {VueShowdown} from "vue-showdown";
+import { useReminderStore } from '../stores/reminderStore'
 
 const route = useRoute()
 const router = useRouter()
+const reminderStore = useReminderStore()
 
 const report = ref<ReportDetail | null>(null)
 const isLoading = ref(false)
 const errorMessage = ref('')
+const isScheduling = ref(false)
+const actionFeedback = ref('')
 
 const reportId = computed(() => {
   const rawId = route.params.id
@@ -117,6 +124,7 @@ const loadReport = async (id?: string) => {
 
   isLoading.value = true
   errorMessage.value = ''
+  actionFeedback.value = ''
 
   try {
     report.value = await reportsApi.getById(id)
@@ -139,6 +147,22 @@ function goBack() {
     return
   }
   router.push('/timeline')
+}
+
+async function handleScheduleLater() {
+  if (!report.value || isScheduling.value) {
+    return
+  }
+
+  isScheduling.value = true
+  actionFeedback.value = ''
+
+  try {
+    const result = await reminderStore.addReportTask(report.value)
+    actionFeedback.value = result.added ? '已加入每日计划，后续会在提醒页集中查看。' : '该巡检任务已在每日计划中。'
+  } finally {
+    isScheduling.value = false
+  }
 }
 </script>
 
@@ -255,6 +279,13 @@ function goBack() {
 .body-note {
   margin: 0;
   color: var(--shell-text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.action-feedback {
+  margin: 0;
+  color: var(--shell-primary);
   font-size: 12px;
   line-height: 1.45;
 }
