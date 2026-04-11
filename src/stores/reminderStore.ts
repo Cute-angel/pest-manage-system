@@ -60,6 +60,7 @@ function createTaskId(sourceType: PlannedTaskSource, sourceId: string) {
 }
 
 export const useReminderStore = defineStore('reminder-store', () => {
+  // noti items
   const tasks = ref<PlannedTask[]>(readLocalStorage<PlannedTask[]>(TASKS_STORAGE_KEY, []))
   const settings = ref<ReminderSettings>(readLocalStorage<ReminderSettings>(SETTINGS_STORAGE_KEY, defaultSettings))
 
@@ -120,7 +121,7 @@ export const useReminderStore = defineStore('reminder-store', () => {
       return { added: false, task: existingTask }
     }
 
-    const nextTask: PlannedTask = {
+    const newTask: PlannedTask = {
       id: createTaskId('report', report.id),
       sourceType: 'report',
       sourceId: report.id,
@@ -131,11 +132,12 @@ export const useReminderStore = defineStore('reminder-store', () => {
       status: 'pending',
     }
 
-    tasks.value = [nextTask, ...tasks.value]
+    tasks.value = [newTask, ...tasks.value]
+    // save to localStorage
     persistTasks()
     await syncNotifications()
 
-    return { added: true, task: nextTask }
+    return { added: true, task: newTask }
   }
 
   async function updateReminderSettings(nextSettings: ReminderSettings) {

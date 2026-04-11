@@ -131,6 +131,7 @@ const runDevNotificationTest = import.meta.env.DEV
       if (!permissionGranted) {
         return '通知权限未授权，测试通知未发送。'
       }
+      console.log("send notification")
 
       notification.sendNotification({
         id: 920001,

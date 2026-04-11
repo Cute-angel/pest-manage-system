@@ -10,7 +10,10 @@ import TimelinePage from "./pages/TimelinePage.vue";
 import { createPinia } from "pinia";
 import { isAuthenticatedSession } from "./api";
 import VueViewer from "v-viewer";
-import { initializeReminderNotifications } from "./services/reminderNotifications";
+import {
+  consumePendingNotificationNavigation,
+  initializeReminderNotifications,
+} from "./services/reminderNotifications";
 import { useReminderStore } from "./stores/reminderStore";
 import 'viewerjs/dist/viewer.css'
 
@@ -45,6 +48,7 @@ const router = createRouter({
 });
 
 // route guard to check authentication before each route change
+
 router.beforeEach((to) => {
   const isAuthenticated = isAuthenticatedSession();
 
@@ -75,13 +79,21 @@ router.afterEach((to, from) => {
 });
 
 const pinia = createPinia();
-createApp(App)
-    .use(router)
-    .use(pinia)
-    .use(VueViewer)
-    .use(VueShowdownPlugin)
-    .mount("#app");
 
-const reminderStore = useReminderStore(pinia);
-void reminderStore.syncReminderNotifications();
-void initializeReminderNotifications(router);
+async function bootstrap() {
+  createApp(App)
+      .use(router)
+      .use(pinia)
+      .use(VueViewer)
+      .use(VueShowdownPlugin)
+      .mount("#app");
+
+  const reminderStore = useReminderStore(pinia);
+
+  await router.isReady();
+  await initializeReminderNotifications(router);
+  await consumePendingNotificationNavigation(router);
+  void reminderStore.syncReminderNotifications();
+}
+
+void bootstrap();

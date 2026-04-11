@@ -54,9 +54,11 @@
             <p v-if="actionFeedback" class="action-feedback">{{ actionFeedback }}</p>
             <div class="button-row">
               <button class="light-btn btn-soft-primary" type="button">确认执行</button>
+
               <button class="light-btn btn-soft" type="button" :disabled="isScheduling || !report" @click="handleScheduleLater">
                 {{ isScheduling ? '加入中...' : '稍后处理' }}
               </button>
+
             </div>
           </article>
         </section>
@@ -150,10 +152,12 @@ function goBack() {
 }
 
 async function handleScheduleLater() {
+  //check if report exist and not scheduling
   if (!report.value || isScheduling.value) {
     return
   }
 
+  // lock state
   isScheduling.value = true
   actionFeedback.value = ''
 
