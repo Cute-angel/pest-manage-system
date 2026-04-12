@@ -1,0 +1,166 @@
+<mxfile host="65bd71144e" compressed="false">
+    <diagram id="frontend-architecture" name="Frontend Architecture">
+        <mxGraphModel dx="1868" dy="1506" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="1300" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="2" value="" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#475569;fillColor=#E2E8F0;fontStyle=1;fontSize=18;align=left;spacingLeft=16;spacingTop=12;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="40" width="1520" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#0F766E;fillColor=#CCFBF1;fontStyle=1;fontSize=18;align=left;spacingLeft=16;spacingTop=12;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="230" width="920" height="760" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" value="" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#7C3AED;fillColor=#EDE9FE;fontStyle=1;fontSize=18;align=left;spacingLeft=16;spacingTop=12;" parent="1" vertex="1">
+                    <mxGeometry x="990" y="230" width="570" height="760" as="geometry"/>
+                </mxCell>
+                <mxCell id="5" value="外部依赖与运行边界" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#B45309;fillColor=#FEF3C7;fontStyle=1;fontSize=18;align=left;spacingLeft=16;spacingTop=12;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="1020" width="1520" height="190" as="geometry"/>
+                </mxCell>
+                <mxCell id="10" value="Tauri WebView / 浏览器" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#64748B;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="90" y="88" width="230" height="82" as="geometry"/>
+                </mxCell>
+                <mxCell id="11" value="src/main.ts&#xa;应用启动与插件注册" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#64748B;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="390" y="88" width="240" height="82" as="geometry"/>
+                </mxCell>
+                <mxCell id="12" value="App.vue&#xa;应用壳层 / router-view" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#64748B;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="695" y="60" width="220" height="82" as="geometry"/>
+                </mxCell>
+                <mxCell id="13" value="Vue Router&#xa;路由分发与鉴权守卫" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#64748B;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="990" y="60" width="240" height="82" as="geometry"/>
+                </mxCell>
+                <mxCell id="14" value="Viewer / Showdown 等前端插件" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#64748B;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="1260" y="88" width="220" height="82" as="geometry"/>
+                </mxCell>
+                <mxCell id="20" value="登录认证模块&#xa;LoginPage&#xa;LoginTable / RegisteTable" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#0F766E;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="90" y="320" width="230" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="21" value="首页总览模块&#xa;HomePage&#xa;总览卡片 / 地块切换 / 天气" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#0F766E;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="385" y="298" width="240" height="118" as="geometry"/>
+                </mxCell>
+                <mxCell id="22" value="实时检测模块&#xa;DetectPage&#xa;图片上传 / 识别结果 / 记录上报" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#0F766E;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="690" y="320" width="230" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="23" value="时间线模块&#xa;TimelinePage + DetailPage&#xa;列表、筛选、详情查看" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#0F766E;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="90" y="530" width="230" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="24" value="建议详情模块&#xa;RecommendationDetailPage&#xa;建议查看与执行入口" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#0F766E;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="385" y="530" width="240" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="25" value="个人中心模块&#xa;MePage&#xa;资料维护 / 密码修改 / 退出登录" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#0F766E;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="690" y="520" width="230" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="26" value="共享 UI 组件&#xa;BottomNav / PullToRefresh / 弹层 / 卡片 / 表单 / 图片查看" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#0F766E;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="200" y="734" width="560" height="96" as="geometry"/>
+                </mxCell>
+                <mxCell id="27" value="说明&#xa;页面按模块组织，业务逻辑主要通过前端服务层访问后端；共享组件提供导航、交互和展示能力。" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8FAFC;strokeColor=#0F766E;dashed=1;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="200" y="880" width="560" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="30" value="Pinia 状态&#xa;DashBoardStore&#xa;地块选择等轻量共享状态" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#7C3AED;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="1040" y="310" width="210" height="94" as="geometry"/>
+                </mxCell>
+                <mxCell id="31" value="会话存储&#xa;localStorage&#xa;Token / 登录态 / 游客态" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#7C3AED;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="1310" y="310" width="210" height="94" as="geometry"/>
+                </mxCell>
+                <mxCell id="32" value="HTTP 基础服务&#xa;Axios 实例 + 拦截器&#xa;鉴权、刷新、统一错误处理" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#7C3AED;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="1040" y="500" width="480" height="104" as="geometry"/>
+                </mxCell>
+                <mxCell id="33" value="业务前端服务&#xa;认证 / 仪表盘 / 检测 / 时间线 / 建议 / 用户 / 地块" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#7C3AED;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="1040" y="660" width="480" height="104" as="geometry"/>
+                </mxCell>
+                <mxCell id="34" value="工具与配置&#xa;密码摘要 / 环境变量 / 公共工具" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#7C3AED;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="1040" y="830" width="210" height="94" as="geometry"/>
+                </mxCell>
+                <mxCell id="35" value="天气组件服务&#xa;独立天气请求与本地缓存" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#7C3AED;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="1310" y="830" width="210" height="94" as="geometry"/>
+                </mxCell>
+                <mxCell id="40" value="业务后端服务" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B45309;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="240" y="1080" width="320" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="41" value="天气服务" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B45309;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="640" y="1080" width="320" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="42" value="Tauri Rust 容器&#xa;桌面能力与原生插件入口" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#B45309;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="1120" y="1080" width="320" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="100" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#475569;strokeWidth=2;endArrow=block;endFill=1;" parent="1" source="10" target="11" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="101" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#475569;strokeWidth=2;endArrow=block;endFill=1;" parent="1" source="11" target="12" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="102" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#475569;strokeWidth=2;endArrow=block;endFill=1;" parent="1" source="12" target="13" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="103" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#475569;strokeWidth=2;endArrow=block;endFill=1;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="630" y="164.00000000000023" as="sourcePoint"/>
+                        <mxPoint x="1260" y="164" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="123" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#7C3AED;strokeWidth=2;endArrow=block;endFill=1;" parent="1" source="33" target="34" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="125" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#B45309;strokeWidth=2;endArrow=block;endFill=1;" parent="1" source="35" target="41" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1415" y="1000"/>
+                            <mxPoint x="800" y="1000"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="126" value="&lt;span style=&quot;color: rgb(0, 0, 0); font-size: 18px; text-align: left; text-wrap-mode: wrap;&quot;&gt;页面模块层&lt;/span&gt;" style="text;strokeColor=none;fillColor=none;html=1;fontSize=24;fontStyle=1;verticalAlign=middle;align=center;" vertex="1" parent="1">
+                    <mxGeometry x="10" y="533" width="100" height="154" as="geometry"/>
+                </mxCell>
+                <mxCell id="127" value="&#xa;&lt;span style=&quot;color: rgb(0, 0, 0); font-family: Helvetica; font-size: 18px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 700; letter-spacing: normal; orphans: 2; text-align: left; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: normal; background-color: rgb(251, 251, 251); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial; display: inline !important; float: none;&quot;&gt;状态与前端服务层&lt;/span&gt;&#xa;&#xa;" style="text;strokeColor=none;fillColor=none;html=1;fontSize=24;fontStyle=1;verticalAlign=middle;align=center;" vertex="1" parent="1">
+                    <mxGeometry x="960" y="590" width="100" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="131" value="运行时与应用入口" style="text;strokeColor=none;fillColor=none;fontSize=24;fontStyle=1;verticalAlign=middle;align=left;horizontal=1;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="55" y="60" width="300" height="22" as="geometry"/>
+                </mxCell>
+                <mxCell id="142" value="" style="edgeStyle=elbowEdgeStyle;elbow=vertical;endArrow=classic;html=1;curved=0;rounded=0;endSize=8;startSize=8;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.333;entryY=0.957;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="21" target="30">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="750" y="470" as="sourcePoint"/>
+                        <mxPoint x="800" y="420" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="810" y="440"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="143" value="地块选择缓存" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="142">
+                    <mxGeometry x="-0.1136" y="-2" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="144" value="" style="edgeStyle=elbowEdgeStyle;elbow=vertical;endArrow=classic;html=1;curved=0;rounded=0;endSize=8;startSize=8;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" target="31">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="860" y="519.9999999999998" as="sourcePoint"/>
+                        <mxPoint x="1470" y="404" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="1140" y="470"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="145" value="登录登出" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="144">
+                    <mxGeometry x="0.0504" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="146" value="" style="edgeStyle=segmentEdgeStyle;endArrow=classic;html=1;curved=0;rounded=0;endSize=8;startSize=8;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="20">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="740" y="610" as="sourcePoint"/>
+                        <mxPoint x="860" y="490" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="205" y="490"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="147" value="" style="endArrow=classic;startArrow=classic;html=1;entryX=0.478;entryY=0.981;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0.478;exitY=0.034;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1" source="33" target="32">
+                    <mxGeometry width="50" height="50" relative="1" as="geometry">
+                        <mxPoint x="740" y="610" as="sourcePoint"/>
+                        <mxPoint x="790" y="560" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
