@@ -134,6 +134,10 @@ watch(reportId, (id) => {
 }, { immediate: true })
 
 function goBack() {
+  if (window.history.length > 1) {
+    router.back()
+    return
+  }
   router.push('/timeline')
 }
 </script>

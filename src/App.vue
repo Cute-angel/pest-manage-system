@@ -1,6 +1,10 @@
 <template>
   <div class="shell" data-theme="verdant-dawn">
-    <router-view class="p-0" />
+    <router-view  class="p-0"  v-slot="{ Component }">
+      <keep-alive>
+        <component :is="Component" />
+      </keep-alive>
+    </router-view>
   </div>
 </template>
 

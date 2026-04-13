@@ -7,6 +7,14 @@ export interface ApiError {
   status?: number
   code?: string
   details?: unknown
+  response?:ErrorResponse
+}
+
+type ErrorResponse = {
+  data:{
+    code:string,
+    message:string
+  }
 }
 
 type DataEnvelope<T> = {
@@ -72,31 +80,24 @@ http.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const originalRequest = error.config as RetryableRequestConfig | undefined
-
     if (shouldRefresh(error, originalRequest)) {
       try {
         const nextAccessToken = await refreshAccessToken()
-
         if (!originalRequest) {
           throw error
         }
-
         originalRequest._retry = true
         originalRequest.headers.Authorization = `Bearer ${nextAccessToken}`
-
         return http(originalRequest)
       } catch (refreshError) {
         clearSessionAndRedirectToLogin()
         return Promise.reject(toApiError(refreshError))
       }
     }
-
     const apiError = toApiError(error)
-
     if (apiError.status === 401) {
       clearAuthSession()
     }
-
     return Promise.reject(apiError)
   },
 )
@@ -171,10 +172,7 @@ const clearSessionAndRedirectToLogin = () => {
 }
 
 export const toApiError = (error: unknown): ApiError => {
-  if (isApiError(error)) {
-    return error
-  }
-
+  console.error(error)
   if (axios.isAxiosError(error)) {
     const responseData = error.response?.data as Record<string, unknown> | undefined
     const message =
@@ -189,6 +187,10 @@ export const toApiError = (error: unknown): ApiError => {
       code: pickString(responseData?.code) || error.code,
       details: responseData,
     }
+  }
+
+  if (isApiError(error)) {
+    return error
   }
 
   if (error instanceof Error) {
@@ -230,6 +232,8 @@ export const extractItems = <T>(
   return extracted.items
 }
 
+
+
 const isApiError = (error: unknown): error is ApiError => {
   return Boolean(error) && typeof error === 'object' && error !== null && 'message' in error
 }
@@ -237,3 +241,6 @@ const isApiError = (error: unknown): error is ApiError => {
 const pickString = (value: unknown) => {
   return typeof value === 'string' && value.trim() ? value : ''
 }
+
+
+

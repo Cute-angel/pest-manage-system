@@ -2,7 +2,12 @@
   <div
     ref="containerRef"
     class="pull-refresh"
+    :data-debug-saved-scroll-top="debugSavedScrollTop"
+    :data-debug-live-scroll-top="debugLiveScrollTop"
+    :data-debug-scroll-height="debugScrollHeight"
+    :data-debug-client-height="debugClientHeight"
     v-bind="$attrs"
+    @scroll.passive="syncDebugMetricsFromScroll"
     @touchstart="handleTouchStart"
     @touchmove="handleTouchMove"
     @touchend="handleTouchEnd"
@@ -24,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onActivated, onMounted, ref } from 'vue'
 import { RefreshCw } from 'lucide-vue-next'
 
 defineOptions({
@@ -52,6 +57,10 @@ const containerRef = ref<HTMLElement | null>(null)
 const pullDistance = ref(0)
 const isPulling = ref(false)
 const isRefreshing = ref(false)
+const debugSavedScrollTop = ref(0)
+const debugLiveScrollTop = ref(0)
+const debugScrollHeight = ref(0)
+const debugClientHeight = ref(0)
 
 let startY = 0
 
@@ -101,6 +110,22 @@ const spinnerStyle = computed(() => {
 
 defineExpose({
   containerRef,
+})
+
+onMounted(() => {
+  syncDebugMetrics()
+})
+
+onActivated(() => {
+  syncDebugMetrics()
+  requestAnimationFrame(() => {
+    // Keep-alive restores component state before the inner scroller fully settles.
+    restoreSavedScrollPosition()
+    syncDebugMetrics()
+    requestAnimationFrame(() => {
+      syncDebugMetrics()
+    })
+  })
 })
 
 function handleTouchStart(event: TouchEvent) {
@@ -163,6 +188,39 @@ async function handleTouchEnd() {
 function handleTouchCancel() {
   isPulling.value = false
   pullDistance.value = 0
+}
+
+function syncDebugMetricsFromScroll(event: Event) {
+  const target = event.target as HTMLElement | null
+
+  if (!target) {
+    return
+  }
+
+  debugSavedScrollTop.value = Math.round(target.scrollTop)
+  syncDebugMetrics(target)
+}
+
+function syncDebugMetrics(target = containerRef.value) {
+  if (!target) {
+    return
+  }
+
+  debugLiveScrollTop.value = Math.round(target.scrollTop)
+  debugScrollHeight.value = Math.round(target.scrollHeight)
+  debugClientHeight.value = Math.round(target.clientHeight)
+}
+
+function restoreSavedScrollPosition() {
+  const target = containerRef.value
+
+  if (!target || debugSavedScrollTop.value <= 0) {
+    return
+  }
+
+  // Apply the last observed scroll position back to the live scroller.
+  target.scrollTop = debugSavedScrollTop.value
+  debugLiveScrollTop.value = Math.round(target.scrollTop)
 }
 </script>
 
