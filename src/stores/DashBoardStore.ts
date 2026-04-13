@@ -10,4 +10,3 @@ export const useDashBoard =  defineStore("DashBoardStore", ()=>{
 
     return { selectedPlots,setSelectedPlots };
 })
-

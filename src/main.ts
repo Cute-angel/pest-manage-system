@@ -14,6 +14,12 @@ import 'viewerjs/dist/viewer.css'
 
 const router = createRouter({
   history: createWebHistory(),
+  scrollBehavior(_to, _from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition;
+    }
+    return { left: 0, top: 0 };
+  },
   routes: [
     { path: "/", redirect: "/home" },
     { path: "/home", component:  HomePage, meta: { requiresAuth: true } },
@@ -50,6 +56,18 @@ router.beforeEach((to) => {
   }
 
   return true;
+});
+
+router.afterEach((to, from) => {
+  const toDepth = to.path.split('/').filter(Boolean).length;
+  const fromDepth = from.path.split('/').filter(Boolean).length;
+
+  if (toDepth === fromDepth) {
+    to.meta.transition = "route-fade";
+    return;
+  }
+
+  to.meta.transition = toDepth < fromDepth ? "route-slide-right" : "route-slide-left";
 });
 
 createApp(App)
