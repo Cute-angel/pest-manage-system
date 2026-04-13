@@ -42,6 +42,7 @@
           <h2>建议时机</h2>
           <p>{{ recommendation.timeline }}</p>
         </section>
+        <p v-if="actionFeedback" class="action-feedback">{{ actionFeedback }}</p>
       </template>
 
       <template v-else>
@@ -50,29 +51,69 @@
       </template>
 
       <div class="spacer" />
-      <button class="confirm-btn btn-soft-primary" type="button">确认 / 安排执行</button>
+      <button
+        class="confirm-btn"
+        :class="isTaskAdded ? 'btn-disabled' : 'btn-soft-primary'"
+        type="button"
+        :disabled="isScheduling || isTaskAdded || !recommendation"
+        @click="handleConfirmSchedule"
+      >
+        {{ confirmButtonText }}
+      </button>
     </section>
   </main>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { ArrowLeft } from 'lucide-vue-next'
 import { useRoute, useRouter } from 'vue-router'
 
 import { recommendationsApi, toApiError, type RecommendationDetail } from '../api'
+import { useReminderStore } from '../stores/reminderStore'
 import '../styles/mobile-shell.css'
 
 const route = useRoute()
 const router = useRouter()
+const reminderStore = useReminderStore()
 
 const recommendation = ref<RecommendationDetail | null>(null)
 const isLoading = ref(false)
 const errorMessage = ref('')
+const isScheduling = ref(false)
+const actionFeedback = ref('')
+
+const recommendationId = computed(() => {
+  const rawId = route.query.id
+  return Array.isArray(rawId) ? rawId[0] : rawId
+})
+
+const isTaskAdded = computed(() => {
+  if (!recommendation.value) {
+    return false
+  }
+
+  return reminderStore.tasks.some(
+    (task) => task.sourceType === 'recommendation' && task.sourceId === recommendation.value?.id,
+  )
+})
+
+const confirmButtonText = computed(() => {
+  if (isScheduling.value) {
+    return '加入中...'
+  }
+
+  if (isTaskAdded.value) {
+    return '已添加'
+  }
+
+  return '确认 / 安排执行'
+})
 
 const loadRecommendation = async (id?: string) => {
   isLoading.value = true
   errorMessage.value = ''
+  actionFeedback.value = ''
 
   try {
     recommendation.value = id
@@ -87,15 +128,28 @@ const loadRecommendation = async (id?: string) => {
 }
 
 watch(
-  () => {
-    const rawId = route.query.id
-    return Array.isArray(rawId) ? rawId[0] : rawId
-  },
+  recommendationId,
   (id) => {
     void loadRecommendation(id ?? undefined)
   },
   { immediate: true },
 )
+
+async function handleConfirmSchedule() {
+  if (!recommendation.value || isScheduling.value || isTaskAdded.value) {
+    return
+  }
+
+  isScheduling.value = true
+  actionFeedback.value = ''
+
+  try {
+    const result = await reminderStore.addRecommendationTask(recommendation.value)
+    actionFeedback.value = result.added ? '已加入每日计划，后续会按提醒时间通知。' : '该建议已加入每日计划。'
+  } finally {
+    isScheduling.value = false
+  }
+}
 
 function goBack() {
   if (window.history.length > 1) {
@@ -158,6 +212,13 @@ function goBack() {
   line-height: 1.45;
 }
 
+.action-feedback {
+  margin: 8px 0 0;
+  color: var(--shell-primary);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .spacer {
   flex: 1;
 }
@@ -167,5 +228,12 @@ function goBack() {
   height: 46px;
   font-size: 13px;
   font-weight: 600;
+}
+
+.btn-disabled {
+  background: var(--shell-bg-muted);
+  color: var(--shell-text-subtle);
+  border: 1px solid var(--shell-line);
+  cursor: not-allowed;
 }
 </style>

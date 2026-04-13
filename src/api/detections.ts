@@ -33,7 +33,7 @@ export const detectionsApi = {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
-      timeout: 1000*60,
+      timeout: 1000*600,
     })
 
     return extractData(response.data)

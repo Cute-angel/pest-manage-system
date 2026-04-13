@@ -38,14 +38,14 @@
               <button class="menu-row" type="button" @click="goToNotificationSettings"><span>消息提醒</span>
                 <ChevronRight :size="14" />
               </button>
-              <div class="divider" />
-              <button class="menu-row" type="button"><span>显示与字体</span>
-                <ChevronRight :size="14" />
-              </button>
-              <div class="divider" />
-              <button class="menu-row" type="button"><span>数据同步</span>
-                <ChevronRight :size="14" />
-              </button>
+<!--              <div class="divider" />-->
+<!--              <button class="menu-row" type="button"><span>显示与字体</span>-->
+<!--                <ChevronRight :size="14" />-->
+<!--              </button>-->
+<!--              <div class="divider" />-->
+<!--              <button class="menu-row" type="button"><span>数据同步</span>-->
+<!--                <ChevronRight :size="14" />-->
+<!--              </button>-->
             </article>
           </section>
 
@@ -62,7 +62,7 @@
             </article>
           </section>
 
-          <section v-if="isDev" class="menu-section">
+          <!-- <section v-if="isDev" class="menu-section">
             <h2>开发调试</h2>
             <article class="card menu-card">
               <button class="menu-row" type="button" :disabled="isSendingDevNotification" @click="handleDevNotificationTest">
@@ -71,7 +71,7 @@
               </button>
             </article>
             <p v-if="devNotificationFeedback" class="dev-feedback">{{ devNotificationFeedback }}</p>
-          </section>
+          </section> -->
 
           <button class="logout-btn btn-soft interactive-card" type="button" @click="handleLogout">
             {{ isLoggingOut ? '退出中...' : '退出登录' }}
@@ -110,43 +110,43 @@ const summary = ref<DashboardSummary | null>(null)
 const errorMessage = ref('')
 const isLoggingOut = ref(false)
 const isAccountSettingsOpen = ref(false)
-const isSendingDevNotification = ref(false)
-const devNotificationFeedback = ref('')
-const isDev = import.meta.env.DEV
+// const isSendingDevNotification = ref(false)
+// const devNotificationFeedback = ref('')
+//const isDev = import.meta.env.DEV
 
-const runDevNotificationTest = import.meta.env.DEV
-  ? async () => {
-      if (!(typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window)) {
-        return '当前不在 Tauri 环境，无法触发系统通知。'
-      }
-
-      const notification = await import('@tauri-apps/plugin-notification')
-      let permissionGranted = await notification.isPermissionGranted()
-
-      if (!permissionGranted) {
-        const permission = await notification.requestPermission()
-        permissionGranted = permission === 'granted'
-      }
-
-      if (!permissionGranted) {
-        return '通知权限未授权，测试通知未发送。'
-      }
-      console.log("send notification")
-
-      notification.sendNotification({
-        id: 920001,
-        title: '开发环境通知测试',
-        body: '这是一条仅用于开发调试的测试通知。',
-        autoCancel: true,
-        extra: {
-          route: '/task-reminders',
-          notificationType: 'dev-notification-test',
-        },
-      })
-
-      return '测试通知已发送。'
-    }
-  : undefined
+// const runDevNotificationTest = import.meta.env.DEV
+//   ? async () => {
+//       if (!(typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window)) {
+//         return '当前不在 Tauri 环境，无法触发系统通知。'
+//       }
+//
+//       const notification = await import('@tauri-apps/plugin-notification')
+//       let permissionGranted = await notification.isPermissionGranted()
+//
+//       if (!permissionGranted) {
+//         const permission = await notification.requestPermission()
+//         permissionGranted = permission === 'granted'
+//       }
+//
+//       if (!permissionGranted) {
+//         return '通知权限未授权，测试通知未发送。'
+//       }
+//       console.log("send notification")
+//
+//       notification.sendNotification({
+//         id: 920001,
+//         title: '开发环境通知测试',
+//         body: '这是一条仅用于开发调试的测试通知。',
+//         autoCancel: true,
+//         extra: {
+//           route: '/task-reminders',
+//           notificationType: 'dev-notification-test',
+//         },
+//       })
+//
+//       return '测试通知已发送。'
+//     }
+//   : undefined
 
 const displayName = computed(() => {
   if (!profile.value) {
@@ -212,22 +212,22 @@ const goToNotificationSettings = () => {
   void router.push('/notification-settings')
 }
 
-const handleDevNotificationTest = async () => {
-  if (!runDevNotificationTest || isSendingDevNotification.value) {
-    return
-  }
-
-  isSendingDevNotification.value = true
-  devNotificationFeedback.value = ''
-
-  try {
-    devNotificationFeedback.value = await runDevNotificationTest()
-  } catch (error) {
-    devNotificationFeedback.value = `测试通知发送失败：${toApiError(error).message}`
-  } finally {
-    isSendingDevNotification.value = false
-  }
-}
+// const handleDevNotificationTest = async () => {
+//   if (!runDevNotificationTest || isSendingDevNotification.value) {
+//     return
+//   }
+//
+//   isSendingDevNotification.value = true
+//   devNotificationFeedback.value = ''
+//
+//   try {
+//     devNotificationFeedback.value = await runDevNotificationTest()
+//   } catch (error) {
+//     devNotificationFeedback.value = `测试通知发送失败：${toApiError(error).message}`
+//   } finally {
+//     isSendingDevNotification.value = false
+//   }
+// }
 
 onMounted(() => {
   void loadPageData()
