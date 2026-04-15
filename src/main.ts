@@ -10,6 +10,11 @@ import TimelinePage from "./pages/TimelinePage.vue";
 import { createPinia } from "pinia";
 import { isAuthenticatedSession } from "./api";
 import VueViewer from "v-viewer";
+import {
+  consumePendingNotificationNavigation,
+  initializeReminderNotifications,
+} from "./services/reminderNotifications";
+import { useReminderStore } from "./stores/reminderStore";
 import 'viewerjs/dist/viewer.css'
 
 const router = createRouter({
@@ -25,6 +30,8 @@ const router = createRouter({
     { path: "/home", component:  HomePage, meta: { requiresAuth: true } },
     { path: "/detect", component: ()=>import('./pages/DetectPage.vue') },
     { path: "/login", component: LoginPage },
+    { path: "/notification-settings", component: ()=> import('./pages/NotificationSettingsPage.vue'), meta: { requiresAuth: true } },
+    { path: "/task-reminders", component:()=>import('./pages/TaskReminderPage.vue'), meta: { requiresAuth: true } },
     { path: "/recommendation-detail", component: ()=>import('./pages/RecommendationDetailPage.vue') },
     { path: "/me", component: ()=>import('./pages/MePage.vue'), meta: { requiresAuth: true } },
     {
@@ -41,6 +48,7 @@ const router = createRouter({
 });
 
 // route guard to check authentication before each route change
+
 router.beforeEach((to) => {
   const isAuthenticated = isAuthenticatedSession();
 
@@ -70,9 +78,22 @@ router.afterEach((to, from) => {
   to.meta.transition = toDepth < fromDepth ? "route-slide-right" : "route-slide-left";
 });
 
-createApp(App)
-    .use(router)
-    .use(createPinia())
-    .use(VueViewer)
-    .use(VueShowdownPlugin)
-    .mount("#app");
+const pinia = createPinia();
+
+async function bootstrap() {
+  createApp(App)
+      .use(router)
+      .use(pinia)
+      .use(VueViewer)
+      .use(VueShowdownPlugin)
+      .mount("#app");
+
+  const reminderStore = useReminderStore(pinia);
+
+  await router.isReady();
+  await initializeReminderNotifications(router);
+  await consumePendingNotificationNavigation(router);
+  void reminderStore.syncReminderNotifications();
+}
+
+void bootstrap();

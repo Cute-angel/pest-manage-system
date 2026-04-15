@@ -12,6 +12,7 @@
     "deploy": "pnpm run build --mode remote && wrangler deploy"
   },
   "dependencies": {
+    "@tauri-apps/plugin-notification": "^2.3.3",
     "axios": "^1.15.0",
     "lucide-vue-next": "^0.542.0",
     "pinia": "^3.0.4",

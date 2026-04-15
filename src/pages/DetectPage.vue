@@ -11,7 +11,14 @@
         </span>
       </header>
 
-      <div class="body-scroll detect-body">
+      <PullToRefresh
+        class="body-scroll detect-body"
+        :on-refresh="resetDetectionState"
+        :disabled="isAnalyzing"
+        pulling-text="下拉重置页面"
+        release-text="松开恢复初始状态"
+        loading-text="正在重置..."
+      >
         <section class="card upload-card">
           <div class="row-between upload-head">
             <div>
@@ -118,7 +125,7 @@
           <p class="body-text">登录后可将本次疑似虫害识别结果上传到巡检记录。</p>
           <RouterLink to="/login" class="login-link btn-soft-primary">登录后上传</RouterLink>
         </section>
-      </div>
+      </PullToRefresh>
 
       <BottomNav active="detect" />
     </section>
@@ -131,6 +138,7 @@ import { Search } from 'lucide-vue-next'
 import 'viewerjs/dist/viewer.css'
 import { detectionsApi, isAuthenticatedSession, toApiError, type DetectionResult } from '../api'
 import BottomNav from '../components/BottomNav.vue'
+import PullToRefresh from '../components/PullToRefresh.vue'
 import '../styles/mobile-shell.css'
 
 const fileInput = ref<HTMLInputElement | null>(null)
@@ -169,7 +177,36 @@ function openPicker() {
     viewer.value!.$viewer.show()
     return
   }
-  fileInput.value?.click()
+
+  openFileSelector()
+}
+
+function openFileSelector() {
+  if (!fileInput.value) {
+    return
+  }
+
+  fileInput.value.value = ''
+  fileInput.value.click()
+}
+
+function resetDetectionState() {
+  if (previewUrl.value) {
+    URL.revokeObjectURL(previewUrl.value)
+  }
+
+  previewUrl.value = ''
+  selectedFileName.value = '尚未选择图片'
+  analysis.value = null
+  analysisError.value = ''
+  recordMessage.value = ''
+  recordStatus.value = 'idle'
+  isSubmittingRecord.value = false
+  isAuthenticated.value = isAuthenticatedSession()
+
+  if (fileInput.value) {
+    fileInput.value.value = ''
+  }
 }
 
 async function handleFileChange(event: Event) {
