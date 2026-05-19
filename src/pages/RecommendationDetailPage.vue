@@ -17,30 +17,50 @@
 
       <template v-else-if="recommendation">
         <h1 class="header">{{ recommendation.title }}</h1>
-        <p class="sub">{{ recommendation.summary }}</p>
+        <VueShowdown
+          class="sub markdown-body"
+          :markdown="normalizeMarkdown(recommendation.summary)"
+          :options="markdownOptions"
+        />
         <div class="divider" />
 
         <section class="section">
           <h2>情况概览</h2>
-          <p>{{ recommendation.situation }}</p>
+          <VueShowdown
+            class="section-content markdown-body"
+            :markdown="normalizeMarkdown(recommendation.situation)"
+            :options="markdownOptions"
+          />
         </section>
         <div class="divider " />
 
         <section class="section">
           <h2>数据</h2>
-          <p>{{ recommendation.evidence }}</p>
+          <VueShowdown
+            class="section-content markdown-body"
+            :markdown="normalizeMarkdown(recommendation.evidence)"
+            :options="markdownOptions"
+          />
         </section>
         <div class="divider" />
 
         <section class="section">
           <h2>建议方案</h2>
-          <p>{{ recommendation.action }}</p>
+          <VueShowdown
+            class="section-content markdown-body"
+            :markdown="normalizeMarkdown(recommendation.action)"
+            :options="markdownOptions"
+          />
         </section>
         <div class="divider" />
 
         <section class="section">
           <h2>建议时机</h2>
-          <p>{{ recommendation.timeline }}</p>
+          <VueShowdown
+            class="section-content markdown-body"
+            :markdown="normalizeMarkdown(recommendation.timeline)"
+            :options="markdownOptions"
+          />
         </section>
         <p v-if="actionFeedback" class="action-feedback">{{ actionFeedback }}</p>
       </template>
@@ -66,6 +86,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { VueShowdown } from 'vue-showdown'
 import { ArrowLeft } from 'lucide-vue-next'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -82,6 +103,13 @@ const isLoading = ref(false)
 const errorMessage = ref('')
 const isScheduling = ref(false)
 const actionFeedback = ref('')
+const markdownOptions = {
+  simpleLineBreaks: true,
+}
+
+function normalizeMarkdown(text: string): string {
+  return text.replace(/\\r\\n/g, '\n').replace(/\\n/g, '\n')
+}
 
 const recommendationId = computed(() => {
   const rawId = route.query.id
@@ -205,11 +233,25 @@ function goBack() {
   font-weight: 600;
 }
 
-.section p {
+.section-content {
   margin: 0;
   color: var(--shell-text-body);
   font-size: 12px;
   line-height: 1.45;
+}
+
+.markdown-body :deep(p),
+.markdown-body :deep(ul),
+.markdown-body :deep(ol) {
+  margin: 0;
+}
+
+.markdown-body :deep(p + p),
+.markdown-body :deep(p + ul),
+.markdown-body :deep(p + ol),
+.markdown-body :deep(ul + p),
+.markdown-body :deep(ol + p) {
+  margin-top: 8px;
 }
 
 .action-feedback {
