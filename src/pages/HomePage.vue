@@ -63,7 +63,8 @@
           </div>
           <PlotsDash v-if="isGlobalView" />
           <PestTrendCard :data="pestData" :trend-value="pestTrendChange" v-if="!isGlobalView"/>
-          <DeviceOnlineRateCard :items="deviceStatus" />
+<!--          <DeviceOnlineRateCard :items="deviceStatus" />-->
+          <DeviceOnlineRateCard />
         </section>
       </PullToRefresh>
 
@@ -76,7 +77,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { ChevronDown } from 'lucide-vue-next'
 
-import { dashboardApi, plotsInfoApi, toApiError, type DashboardDeviceStatus, type DashboardSummary, type Plot } from '../api'
+import { dashboardApi, plotsInfoApi, toApiError, type DashboardSummary, type Plot } from '../api'
 import BottomNav from '../components/BottomNav.vue'
 import DeviceOnlineRateCard from '../components/DeviceOnlineRateCard.vue'
 import LatestSuggestion from '../components/LatestSuggestion.vue'
@@ -88,13 +89,13 @@ import WeatherStatus from "../components/weatherStatus.vue";
 import {useDashBoard} from "../stores/DashBoardStore.ts";
 import {storeToRefs} from "pinia";
 
-type DeviceTone = 'dot-online' | 'dot-offline' | 'dot-maintenance'
+// type DeviceTone = 'dot-online' | 'dot-offline' | 'dot-maintenance'
 
-type DeviceStatusCardItem = {
-  label: string
-  count: number
-  tone: DeviceTone
-}
+// type DeviceStatusCardItem = {
+//   label: string
+//   count: number
+//   tone: DeviceTone
+// }
 
 const DashBoardStore = useDashBoard();
 
@@ -107,35 +108,35 @@ const errorMessage = ref('')
 const plotsError = ref('')
 const dropdownRef = ref<HTMLDivElement | null>(null)
 
-const toneMap: Record<DashboardDeviceStatus['status'], DeviceTone> = {
-  online: 'dot-online',
-  offline: 'dot-offline',
-  maintenance: 'dot-maintenance',
-}
+// const toneMap: Record<DashboardDeviceStatus['status'], DeviceTone> = {
+//   online: 'dot-online',
+//   offline: 'dot-offline',
+//   maintenance: 'dot-maintenance',
+// }
 
-const deviceLabelMap: Record<DashboardDeviceStatus['status'], string> = {
-  online: '在线',
-  offline: '离线',
-  maintenance: '维护中',
-}
+// const deviceLabelMap: Record<DashboardDeviceStatus['status'], string> = {
+//   online: '在线',
+//   offline: '离线',
+//   maintenance: '维护中',
+// }
 
-const translateDeviceLabel = (label: string, status: DashboardDeviceStatus['status']) => {
-  const normalizedLabel = label.trim().toLowerCase()
-
-  if (normalizedLabel === 'online') {
-    return '在线'
-  }
-
-  if (normalizedLabel === 'offline') {
-    return '离线'
-  }
-
-  if (normalizedLabel === 'maintenance') {
-    return '维护中'
-  }
-
-  return label.trim() || deviceLabelMap[status]
-}
+// const translateDeviceLabel = (label: string, status: DashboardDeviceStatus['status']) => {
+//   const normalizedLabel = label.trim().toLowerCase()
+//
+//   if (normalizedLabel === 'online') {
+//     return '在线'
+//   }
+//
+//   if (normalizedLabel === 'offline') {
+//     return '离线'
+//   }
+//
+//   if (normalizedLabel === 'maintenance') {
+//     return '维护中'
+//   }
+//
+//   return label.trim() || deviceLabelMap[status]
+// }
 
 const isGlobalView = computed(() => selectedPlotId.value === null)
 const selectedPlot = computed(() => {
@@ -150,13 +151,13 @@ const fieldName = computed(() => {
 })
 const pestData = computed(() => summary.value?.pestTrend ?? [])
 const pestTrendChange = computed(() => summary.value?.pestTrendChange ?? 0)
-const deviceStatus = computed<DeviceStatusCardItem[]>(() => {
-  return (summary.value?.deviceStatuses ?? []).map((item) => ({
-    label: translateDeviceLabel(item.label, item.status),
-    count: item.count,
-    tone: toneMap[item.status],
-  }))
-})
+// const deviceStatus = computed<DeviceStatusCardItem[]>(() => {
+//   return (summary.value?.deviceStatuses ?? []).map((item) => ({
+//     label: translateDeviceLabel(item.label, item.status),
+//     count: item.count,
+//     tone: toneMap[item.status],
+//   }))
+// })
 
 const recommendationLink = computed(() => {
   const recommendationId = summary.value?.recommendation?.id

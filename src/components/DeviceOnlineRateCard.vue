@@ -55,12 +55,16 @@ type DeviceStatus = {
 }
 
 const props = withDefaults(defineProps<{
-  items: DeviceStatus[]
+  items?: DeviceStatus[]
   title?: string
 }>(), {
+  items: () => [
+    { label: '在线', count: 5, tone: 'dot-online' },
+    { label: '离线', count: 0, tone: 'dot-offline' },
+    { label: '维护中', count: 1, tone: 'dot-maintenance' },
+  ],
   title: '设备在线率',
 })
-
 
 const itemRate = (item: DeviceStatus) => {
   if (totalDevices.value === 0) {
@@ -69,7 +73,6 @@ const itemRate = (item: DeviceStatus) => {
 
   return Math.round((item.count / totalDevices.value) * 100)
 }
-
 
 const gaugeRadius = 42
 const gaugeCircumference = 2 * Math.PI * gaugeRadius
