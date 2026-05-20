@@ -34,6 +34,7 @@ const router = createRouter({
     { path: "/task-reminders", component:()=>import('./pages/TaskReminderPage.vue'), meta: { requiresAuth: true } },
     { path: "/recommendation-detail", component: ()=>import('./pages/RecommendationDetailPage.vue') },
     { path: "/me", component: ()=>import('./pages/MePage.vue'), meta: { requiresAuth: true } },
+    { path: "/about-app", component: ()=>import('./pages/AboutAppPage.vue'), meta: { requiresAuth: true } },
     {
       path: "/timeline",
       component: TimelinePage,

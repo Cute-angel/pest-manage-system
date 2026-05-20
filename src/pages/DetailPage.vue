@@ -44,13 +44,17 @@
           <h2 class="block-title">处置建议</h2>
           <article class="card info-card">
 
-            <p class="body-text">
-              <VueShowdown :markdown="report.recommendationText"/>
-            </p>
+            <VueShowdown
+              class="body-text markdown-body"
+              :markdown="normalizeMarkdown(report.recommendationText)"
+              :options="markdownOptions"
+            />
             <div class="divider" />
-            <p class="body-note">
-              <VueShowdown :markdown="report.recommendationNote"/>
-            </p>
+            <VueShowdown
+              class="body-note markdown-body"
+              :markdown="normalizeMarkdown(report.recommendationNote)"
+              :options="markdownOptions"
+            />
             <p v-if="actionFeedback" class="action-feedback">{{ actionFeedback }}</p>
             <div class="button-row">
               <button class="light-btn btn-soft-primary" type="button">确认执行</button>
@@ -75,13 +79,14 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { VueShowdown } from 'vue-showdown'
 import { ArrowLeft } from 'lucide-vue-next'
 import { useRoute, useRouter } from 'vue-router'
 import 'viewerjs/dist/viewer.css'
 
 import { reportsApi, toApiError, type ReportDetail } from '../api'
 import '../styles/mobile-shell.css'
-import {VueShowdown} from "vue-showdown";
+
 import { useReminderStore } from '../stores/reminderStore'
 
 const route = useRoute()
@@ -93,6 +98,13 @@ const isLoading = ref(false)
 const errorMessage = ref('')
 const isScheduling = ref(false)
 const actionFeedback = ref('')
+const markdownOptions = {
+  simpleLineBreaks: true,
+}
+
+function normalizeMarkdown(text: string): string {
+  return text.replace(/\\r\\n/g, '\n').replace(/\\n/g, '\n')
+}
 
 const reportId = computed(() => {
   const rawId = route.params.id
@@ -285,6 +297,20 @@ async function handleScheduleLater() {
   color: var(--shell-text-muted);
   font-size: 12px;
   line-height: 1.45;
+}
+
+.markdown-body :deep(p),
+.markdown-body :deep(ul),
+.markdown-body :deep(ol) {
+  margin: 0;
+}
+
+.markdown-body :deep(p + p),
+.markdown-body :deep(p + ul),
+.markdown-body :deep(p + ol),
+.markdown-body :deep(ul + p),
+.markdown-body :deep(ol + p) {
+  margin-top: 8px;
 }
 
 .action-feedback {
