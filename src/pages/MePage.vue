@@ -56,7 +56,7 @@
                 <ChevronRight :size="14" />
               </button>
               <div class="divider" />
-              <button class="menu-row" type="button"><span>关于应用</span>
+              <button class="menu-row" type="button" @click="goToAboutApp"><span>关于应用</span>
                 <ChevronRight :size="14" />
               </button>
             </article>
@@ -78,7 +78,6 @@
           </button>
           <div class="spacer" />
         </div>
-
       </PullToRefresh>
 
       <BottomNav active="me" />
@@ -210,6 +209,10 @@ const handleProfileUpdated = (nextProfile: UserProfile) => {
 
 const goToNotificationSettings = () => {
   void router.push('/notification-settings')
+}
+
+const goToAboutApp = () => {
+  void router.push('/about-app')
 }
 
 // const handleDevNotificationTest = async () => {
