@@ -1,4 +1,5 @@
 import { extractData, http } from './http'
+import type { DetectionAiAnalysis, DetectionPestCount, DetectionSeverity } from './structured-ai'
 
 export type DetectionKind = 'pest' | 'clean'
 
@@ -9,15 +10,22 @@ export interface PestCountItem {
 
 export interface DetectionResult {
   id: string
+  processStatus?: string
+  modelStatus?: string
+  sourceType?: string
   kind: DetectionKind
   title: string
   confidence: number
   summary: string
   annotatedImageUrl?: string
+  modelResultImageUrl?: string
+  totalPests?: number
   pestCounts: PestCountItem[]
+  counts?: DetectionPestCount[]
   pestName?: string
-  severity?: string
+  severity?: DetectionSeverity | string | null
   advice?: string
+  aiAnalysis?: DetectionAiAnalysis
 }
 
 export interface CreateDetectionRecordPayload {

@@ -1,4 +1,5 @@
 import { extractData, extractItems, http } from './http'
+import type { DetectionAiAnalysis, DetectionPestCount } from './structured-ai'
 
 export type ReportSeverity = 'light' | 'medium' | 'high'
 export type ReportStatus = 'monitoring' | 'warning' | 'treated'
@@ -13,12 +14,15 @@ export interface ReportSummary {
 }
 
 export interface ReportDetail extends ReportSummary {
+  detectionId?: string
   title: string
   imageUrl: string
   deviceName: string
   locationName: string
   recommendationText: string
   recommendationNote: string
+  counts?: DetectionPestCount[]
+  aiAnalysis?: DetectionAiAnalysis
 }
 
 export interface ReportListParams {
